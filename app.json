@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "cticu-mobile",
+    "name": "CTICU Schedule",
     "slug": "cticu-mobile",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -9,13 +9,29 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "bundleIdentifier": "com.zambrano.cticuschedule",
+      "buildNumber": "1",
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSAppTransportSecurity": {
+          "NSExceptionDomains": {
+            "cticu.zambrano.nyc": {
+              "NSExceptionAllowsInsecureHTTPLoads": false
+            }
+          }
+        }
+      },
+      "config": {
+        "usesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
+      "package": "com.zambrano.cticuschedule",
+      "versionCode": 1,
       "edgeToEdgeEnabled": true
     },
     "web": {
@@ -37,6 +53,13 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "cb88b812-ce54-4e5c-9931-bfb75b03ada5"
+      }
+    },
+    "owner": "gzambran"
   }
 }

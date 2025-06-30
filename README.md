@@ -1,50 +1,80 @@
-# Welcome to your Expo app 👋
+# ICU Scheduler Mobile App
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A React Native/Expo mobile app for viewing ICU doctor schedules.
 
-## Get started
+## Features
 
-1. Install dependencies
+- 🔐 Secure login with session management
+- 📅 Monthly calendar view with Apple Calendar-style UI
+- 🔴 Color-coded shifts (5W, 5C, Night, Swing)
+- 👨‍⚕️ Filter by doctor
+- ⭐ Holiday indicators
+- 📱 Offline support with cached data
+- 🔄 Pull-to-refresh
+- 🔒 Session stored securely with Expo SecureStore
 
-   ```bash
-   npm install
-   ```
+## Setup
 
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
+1. Install dependencies:
 ```bash
-npm run reset-project
+npm install
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+2. Start the development server:
+```bash
+npm start
+```
 
-## Learn more
+3. Run on iOS/Android:
+- Press `i` for iOS simulator
+- Press `a` for Android emulator
+- Or scan QR code with Expo Go app
 
-To learn more about developing your project with Expo, look at the following resources:
+## Architecture
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+- **Framework**: Expo SDK 53
+- **Language**: TypeScript
+- **Navigation**: Expo Router (file-based)
+- **State Management**: React Query + AsyncStorage
+- **Styling**: React Native StyleSheet (iOS-native patterns)
+- **API**: REST API at https://cticu.zambrano.nyc
+- **Authentication**: Session-based with secure storage
 
-## Join the community
+## Project Structure
 
-Join our community of developers creating universal apps.
+```
+cticu-mobile/
+├── app/                    # Expo Router pages
+│   ├── (tabs)/            # Tab navigation
+│   │   ├── index.tsx      # Schedule screen
+│   │   └── explore.tsx    # Settings screen
+│   ├── login.tsx          # Login screen
+│   └── _layout.tsx        # Root layout with auth
+├── components/            # React components
+│   ├── CalendarView.tsx   # Main calendar grid
+│   ├── DayCell.tsx        # Individual day cell
+│   ├── DayDetailModal.tsx # Day detail view
+│   ├── DoctorFilter.tsx   # Doctor filter dropdown
+│   └── OfflineIndicator.tsx
+├── services/              # API services
+│   ├── api.ts            # API client with caching
+│   └── auth.ts           # Authentication service
+├── types/                 # TypeScript types
+│   └── index.ts
+└── utils/                 # Utility functions
+    └── date.ts           # Date helpers
+```
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## Shift Types
+
+- **5W** (Day Week) - Light Pink
+- **5C** (Day Call) - Plum  
+- **Night** - Sky Blue
+- **Swing** (Mon-Thu only) - Pale Green
+
+## Offline Support
+
+The app caches all viewed schedule data using AsyncStorage. When offline:
+- Previously viewed months are available
+- An offline indicator appears
+- Uncached months show "Internet connection required"

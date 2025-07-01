@@ -1,7 +1,7 @@
 # Privacy Policy
 
 **CTICU Schedule App**  
-*Last Updated: July 2025*
+*Last Updated: Julyeas submit --platform ios --latest 2025*
 
 ## Overview
 

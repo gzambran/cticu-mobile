@@ -11,7 +11,7 @@
     "ios": {
       "bundleIdentifier": "com.zambrano.cticuschedule",
       "buildNumber": "1",
-      "supportsTablet": true,
+      "supportsTablet": false,
       "infoPlist": {
         "NSAppTransportSecurity": {
           "NSExceptionDomains": {

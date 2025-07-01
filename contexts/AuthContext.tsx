@@ -1,6 +1,6 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import authService, { AuthError, NetworkError } from '@/services/auth';
+import authService, { NetworkError } from '@/services/auth';
 import { useRouter, useSegments } from 'expo-router';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -33,7 +33,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     // Handle navigation based on auth state
-    const inMainScreen = segments[0] === 'main';
+    const inTabsScreen = segments[0] === '(tabs)';
     const inLoginScreen = segments[0] === 'login';
     
     if (!isLoading) {
@@ -41,8 +41,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Redirect to login if not authenticated
         router.replace('/login');
       } else if (isAuthenticated && inLoginScreen) {
-        // Redirect to main app if authenticated
-        router.replace('/main');
+        // Redirect to tabs if authenticated
+        router.replace('/(tabs)');
       }
     }
   }, [isAuthenticated, segments, isLoading]);

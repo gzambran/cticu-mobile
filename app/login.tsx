@@ -1,47 +1,42 @@
 import { useAuth } from '@/contexts/AuthContext';
-import { NetworkError } from '@/services/auth';
-import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
   Platform,
-  SafeAreaView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function LoginScreen() {
-  const { signIn } = useAuth();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const { signIn } = useAuth();
+  const router = useRouter();
 
   const handleLogin = async () => {
-
     if (!username || !password) {
-      Alert.alert('Error', 'Please enter username and password');
+      Alert.alert('Error', 'Please enter both username and password');
       return;
     }
 
     setLoading(true);
     try {
       const success = await signIn(username, password);
-      if (!success) {
+      if (success) {
+        router.replace('/(tabs)');
+      } else {
         Alert.alert('Login Failed', 'Invalid username or password');
       }
-      // Navigation will be handled by AuthContext
     } catch (error) {
-      if (error instanceof NetworkError) {
-        Alert.alert('Connection Error', error.message);
-      } else {
-        Alert.alert('Error', 'An unexpected error occurred. Please try again.');
-      }
+      Alert.alert('Error', 'Unable to connect to server. Please try again later.');
     } finally {
       setLoading(false);
     }
@@ -49,25 +44,24 @@ export default function LoginScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView
+      <KeyboardAvoidingView 
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}
       >
         <View style={styles.content}>
           <View style={styles.header}>
-            <Ionicons name="calendar" size={60} color="#007AFF" />
             <Text style={styles.title}>CTICU Schedule</Text>
-            <Text style={styles.subtitle}>Sign in to view schedule</Text>
+            <Text style={styles.subtitle}>Sign in to continue</Text>
           </View>
 
           <View style={styles.form}>
             <View style={styles.inputContainer}>
-              <Ionicons name="person-outline" size={20} color="#8E8E93" style={styles.inputIcon} />
+              <Text style={styles.label}>Username</Text>
               <TextInput
                 style={styles.input}
-                placeholder="Username"
                 value={username}
                 onChangeText={setUsername}
+                placeholder="Enter your username"
                 autoCapitalize="none"
                 autoCorrect={false}
                 editable={!loading}
@@ -75,40 +69,32 @@ export default function LoginScreen() {
             </View>
 
             <View style={styles.inputContainer}>
-              <Ionicons name="lock-closed-outline" size={20} color="#8E8E93" style={styles.inputIcon} />
+              <Text style={styles.label}>Password</Text>
               <TextInput
                 style={styles.input}
-                placeholder="Password"
                 value={password}
                 onChangeText={setPassword}
-                secureTextEntry={!showPassword}
+                placeholder="Enter your password"
+                secureTextEntry
+                autoCapitalize="none"
+                autoCorrect={false}
                 editable={!loading}
+                onSubmitEditing={handleLogin}
               />
-              <TouchableOpacity
-                onPress={() => setShowPassword(!showPassword)}
-                style={styles.eyeIcon}
-              >
-                <Ionicons
-                  name={showPassword ? "eye-outline" : "eye-off-outline"}
-                  size={20}
-                  color="#8E8E93"
-                />
-              </TouchableOpacity>
             </View>
 
-            <TouchableOpacity
-              style={[styles.loginButton, loading && styles.loginButtonDisabled]}
+            <TouchableOpacity 
+              style={[styles.button, loading && styles.buttonDisabled]}
               onPress={handleLogin}
               disabled={loading}
             >
               {loading ? (
                 <ActivityIndicator color="white" />
               ) : (
-                <Text style={styles.loginButtonText}>Sign In</Text>
+                <Text style={styles.buttonText}>Sign In</Text>
               )}
             </TouchableOpacity>
           </View>
-
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -125,70 +111,56 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    paddingHorizontal: 30,
+    paddingHorizontal: 24,
     justifyContent: 'center',
   },
   header: {
     alignItems: 'center',
-    marginBottom: 50,
+    marginBottom: 48,
   },
   title: {
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: 'bold',
     color: '#000',
-    marginTop: 16,
+    marginBottom: 8,
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 18,
     color: '#8E8E93',
-    marginTop: 8,
   },
   form: {
-    gap: 16,
+    gap: 20,
   },
   inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'white',
-    borderRadius: 10,
-    paddingHorizontal: 16,
-    height: 50,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: '#C6C6C8',
+    gap: 8,
   },
-  inputIcon: {
-    marginRight: 12,
+  label: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#3C3C43',
   },
   input: {
-    flex: 1,
+    backgroundColor: 'white',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
     fontSize: 16,
-    color: '#000',
+    borderWidth: 1,
+    borderColor: '#E5E5EA',
   },
-  eyeIcon: {
-    padding: 8,
-  },
-  loginButton: {
+  button: {
     backgroundColor: '#007AFF',
-    borderRadius: 10,
-    height: 50,
-    justifyContent: 'center',
+    borderRadius: 12,
+    paddingVertical: 16,
     alignItems: 'center',
-    marginTop: 8,
+    marginTop: 12,
   },
-  loginButtonDisabled: {
+  buttonDisabled: {
     opacity: 0.6,
   },
-  loginButtonText: {
+  buttonText: {
     color: 'white',
-    fontSize: 17,
+    fontSize: 18,
     fontWeight: '600',
-  },
-  footer: {
-    alignItems: 'center',
-    marginTop: 40,
-  },
-  footerText: {
-    fontSize: 14,
-    color: '#8E8E93',
   },
 });

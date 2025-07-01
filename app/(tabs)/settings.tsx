@@ -4,23 +4,22 @@ import api from '@/services/api';
 import { DOCTORS } from '@/types';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useRouter } from 'expo-router';
+import * as Linking from 'expo-linking';
 import React, { useEffect, useState } from 'react';
 import {
-  Alert,
-  FlatList,
-  Modal,
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  Switch,
-  Text,
-  TouchableOpacity,
-  View,
+    Alert,
+    FlatList,
+    Modal,
+    SafeAreaView,
+    ScrollView,
+    StyleSheet,
+    Switch,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 
 export default function SettingsScreen() {
-  const router = useRouter();
   const { signOut } = useAuth();
   const { defaultDoctor, setDefaultDoctor } = useFilter();
   const [firstDayMonday, setFirstDayMonday] = useState(false);
@@ -92,17 +91,14 @@ export default function SettingsScreen() {
     );
   };
 
+  const handleOpenWeb = () => {
+    Linking.openURL('https://cticu.zambrano.nyc');
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
-          <Ionicons name="chevron-back" size={28} color="#007AFF" />
-        </TouchableOpacity>
         <Text style={styles.headerTitle}>Settings</Text>
-        <View style={styles.placeholder} />
       </View>
 
       <ScrollView style={styles.content}>
@@ -146,6 +142,18 @@ export default function SettingsScreen() {
               <Text style={[styles.settingText, { color: '#FF3B30' }]}>Clear Cache</Text>
             </View>
             <Ionicons name="chevron-forward" size={20} color="#C7C7CC" />
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>WEB</Text>
+          
+          <TouchableOpacity style={styles.settingRow} onPress={handleOpenWeb}>
+            <View style={styles.settingInfo}>
+              <Ionicons name="globe-outline" size={20} color="#007AFF" />
+              <Text style={styles.settingText}>View on Web</Text>
+            </View>
+            <Ionicons name="open-outline" size={18} color="#C7C7CC" />
           </TouchableOpacity>
         </View>
 
@@ -214,25 +222,18 @@ const styles = StyleSheet.create({
     backgroundColor: '#F2F2F7',
   },
   header: {
-    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     backgroundColor: 'white',
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 16,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: '#C6C6C8',
-  },
-  backButton: {
-    padding: 4,
   },
   headerTitle: {
     fontSize: 18,
     fontWeight: '600',
     color: '#000',
-  },
-  placeholder: {
-    width: 36,
   },
   content: {
     flex: 1,
@@ -322,5 +323,11 @@ const styles = StyleSheet.create({
     height: StyleSheet.hairlineWidth,
     backgroundColor: '#C6C6C8',
     marginLeft: 20,
+  },
+  helperText: {
+    fontSize: 13,
+    color: '#8E8E93',
+    paddingHorizontal: 20,
+    paddingTop: 8,
   },
 });

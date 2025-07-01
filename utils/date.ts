@@ -2,6 +2,11 @@ export function formatDate(date: Date): string {
   return date.toISOString().split('T')[0];
 }
 
+export function parseDate(dateStr: string): Date {
+  const [year, month, day] = dateStr.split('-').map(Number);
+  return new Date(year, month - 1, day);
+}
+
 export function getMonthName(date: Date): string {
   return date.toLocaleDateString('en-US', { month: 'long' });
 }

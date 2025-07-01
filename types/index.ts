@@ -28,10 +28,10 @@ export interface User {
 }
 
 export const SHIFT_COLORS = {
-  '5W': '#FF0000',    // Red
-  '5C': '#0000FF',    // Blue
-  'Night': '#FFA500', // Orange
-  'Swing': '#00AA00', // Green
+  '5C': '#FF0000',    // Red
+  '5W': '#FF8C00',    // Orange (DarkOrange for better visibility)
+  'Night': '#0000FF', // Blue
+  'Swing': '#00AA00', // Green (keeping as is)
 } as const;
 
 export const DOCTORS = ['CG', 'RV', 'ZZ', 'MO', 'HW', 'NK', 'OE'] as const;

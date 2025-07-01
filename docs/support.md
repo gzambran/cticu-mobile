@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CTICU Schedule - Support</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f5f7;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            padding: 40px 0;
+            background-color: white;
+            margin-bottom: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #1d1d1f;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            color: #6e6e73;
+            font-size: 1.2em;
+        }
+        
+        .section {
+            background-color: white;
+            padding: 30px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h2 {
+            color: #1d1d1f;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+        }
+        
+        .faq-item {
+            margin-bottom: 25px;
+            padding-bottom: 25px;
+            border-bottom: 1px solid #e5e5e7;
+        }
+        
+        .faq-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        
+        h3 {
+            color: #1d1d1f;
+            margin-bottom: 10px;
+            font-size: 1.3em;
+        }
+        
+        p {
+            color: #424245;
+            margin-bottom: 15px;
+        }
+        
+        .contact-info {
+            background-color: #f5f5f7;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        
+        .contact-info a {
+            color: #0071e3;
+            text-decoration: none;
+        }
+        
+        .contact-info a:hover {
+            text-decoration: underline;
+        }
+        
+        .privacy-link {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 1px solid #e5e5e7;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 40px 0;
+            color: #6e6e73;
+            font-size: 0.9em;
+        }
+        
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 2em;
+            }
+            
+            .section {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>CTICU Schedule</h1>
+            <p class="subtitle">Support & Documentation</p>
+        </header>
+        
+        <div class="section">
+            <h2>Frequently Asked Questions</h2>
+            
+            <div class="faq-item">
+                <h3>How do I log in to the app?</h3>
+                <p>Use your CTICU credentials provided by your administrator. Enter your username and password on the login screen.</p>
+            </div>
+            
+            <div class="faq-item">
+                <h3>How do I view the schedule?</h3>
+                <p>After logging in, the schedule tab shows the current rotation schedule. You can scroll through dates and filter by different views.</p>
+            </div>
+            
+            <div class="faq-item">
+                <h3>What are swing shifts?</h3>
+                <p>Swing shifts are additional coverage shifts that can be viewed and managed in the dedicated Swing Shifts tab.</p>
+            </div>
+            
+            <div class="faq-item">
+                <h3>How do I submit time-off requests?</h3>
+                <p>Navigate to the Requests tab to submit and manage your time-off requests. Fill in the required dates and submit for approval.</p>
+            </div>
+            
+            <div class="faq-item">
+                <h3>Is my data secure?</h3>
+                <p>Yes, all data is transmitted securely using HTTPS encryption. Your login credentials are stored securely on your device.</p>
+            </div>
+            
+            <div class="faq-item">
+                <h3>Which devices are supported?</h3>
+                <p>CTICU Schedule is optimized for iPhone devices running iOS 13.4 or later.</p>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>Contact Support</h2>
+            <p>If you need additional assistance or have questions not covered in the FAQ:</p>
+            
+            <div class="contact-info">
+                <p><strong>Email:</strong> <a href="mailto:g@zambrano.nyc">support@cticu.zambrano.nyc</a></p>
+                <p><strong>Response Time:</strong> We typically respond within 24-48 hours during business days.</p>
+            </div>
+            
+            <p style="margin-top: 20px;">For urgent technical issues, please contact your CTICU IT administrator.</p>
+        </div>
+        
+        <div class="section">
+            <h2>App Information</h2>
+            <p><strong>Version:</strong> 1.0.0</p>
+            <p><strong>Developer:</strong> G. Zambrano</p>
+            <p><strong>Platform:</strong> iOS (iPhone only)</p>
+            
+            <div class="privacy-link">
+                <p><a href="privacy.html">Privacy Policy</a></p>
+            </div>
+        </div>
+        
+        <footer>
+            <p>&copy; 2025 CTICU Schedule. All rights reserved.</p>
+        </footer>
+    </div>
+</body>
+</html>

@@ -2,16 +2,28 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 
 interface FilterContextType {
-  selectedDoctor: string | undefined;
-  setSelectedDoctor: (doctor: string | undefined) => void;
+  // Calendar screen filter
+  selectedDoctorCalendar: string | undefined;
+  setSelectedDoctorCalendar: (doctor: string | undefined) => void;
+  
+  // Requests screen filter
+  selectedDoctorRequests: string | undefined;
+  setSelectedDoctorRequests: (doctor: string | undefined) => void;
+  
+  // Default doctor setting
   defaultDoctor: string;
   setDefaultDoctor: (doctor: string) => Promise<void>;
+  
+  // Legacy support (will be removed)
+  selectedDoctor: string | undefined;
+  setSelectedDoctor: (doctor: string | undefined) => void;
 }
 
 const FilterContext = createContext<FilterContextType | undefined>(undefined);
 
 export function FilterProvider({ children }: { children: ReactNode }) {
-  const [selectedDoctor, setSelectedDoctor] = useState<string | undefined>();
+  const [selectedDoctorCalendar, setSelectedDoctorCalendar] = useState<string | undefined>();
+  const [selectedDoctorRequests, setSelectedDoctorRequests] = useState<string | undefined>();
   const [defaultDoctor, setDefaultDoctorState] = useState<string>('All');
   const [isLoading, setIsLoading] = useState(true);
 
@@ -25,7 +37,9 @@ export function FilterProvider({ children }: { children: ReactNode }) {
       if (savedDefault) {
         setDefaultDoctorState(savedDefault);
         if (savedDefault !== 'All') {
-          setSelectedDoctor(savedDefault);
+          // Set default for both screens initially
+          setSelectedDoctorCalendar(savedDefault);
+          setSelectedDoctorRequests(savedDefault);
         }
       }
     } catch (error) {
@@ -38,8 +52,8 @@ export function FilterProvider({ children }: { children: ReactNode }) {
   const setDefaultDoctor = async (doctor: string) => {
     setDefaultDoctorState(doctor);
     await AsyncStorage.setItem('default_doctor_filter', doctor);
-    // Immediately apply the new default to the current filter
-    setSelectedDoctor(doctor === 'All' ? undefined : doctor);
+    // Don't automatically update current filters when default changes
+    // Users can manually set each screen to their preference
   };
 
   if (isLoading) {
@@ -48,10 +62,15 @@ export function FilterProvider({ children }: { children: ReactNode }) {
 
   return (
     <FilterContext.Provider value={{
-      selectedDoctor,
-      setSelectedDoctor,
+      selectedDoctorCalendar,
+      setSelectedDoctorCalendar,
+      selectedDoctorRequests,
+      setSelectedDoctorRequests,
       defaultDoctor,
       setDefaultDoctor,
+      // Legacy support - maps to calendar for backward compatibility
+      selectedDoctor: selectedDoctorCalendar,
+      setSelectedDoctor: setSelectedDoctorCalendar,
     }}>
       {children}
     </FilterContext.Provider>

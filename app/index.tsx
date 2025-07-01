@@ -1,7 +1,13 @@
+import { useAuth } from '@/contexts/AuthContext';
 import { Redirect } from 'expo-router';
+import React from 'react';
 
 export default function Index() {
-  // This will redirect to the login screen, and the AuthContext will handle
-  // redirecting to main if the user is already authenticated
+  const { user } = useAuth();
+
+  if (user) {
+    return <Redirect href="/(tabs)" />;
+  }
+
   return <Redirect href="/login" />;
 }

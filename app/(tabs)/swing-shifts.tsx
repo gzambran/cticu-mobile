@@ -3,18 +3,19 @@ import authService from '@/services/auth';
 import { Schedule } from '@/types';
 import { formatDate } from '@/utils/date';
 import { Ionicons } from '@expo/vector-icons';
+import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    RefreshControl,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface SwingDetails {
   [date: string]: {
@@ -24,16 +25,47 @@ interface SwingDetails {
 }
 
 export default function SwingShiftsScreen() {
+  const insets = useSafeAreaInsets();
   const [doctors, setDoctors] = useState<string[]>([]);
   const [schedules, setSchedules] = useState<Schedule>({});
   const [swingDetails, setSwingDetails] = useState<SwingDetails>({});
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(new Date());
+  const scrollViewRef = React.useRef<ScrollView>(null);
+  const [hasScrolledToToday, setHasScrolledToToday] = useState(false);
 
   useEffect(() => {
     loadData();
   }, []);
+
+  useEffect(() => {
+    // Initial load - scroll to today's date or next swing shift
+    if (!loading && !hasScrolledToToday) {
+      scrollToRelevantDate();
+      setHasScrolledToToday(true);
+    }
+  }, [loading]);
+
+  useEffect(() => {
+    // Handle month navigation
+    if (!loading && scrollViewRef.current) {
+      const today = new Date();
+      const isCurrentMonth = today.getMonth() === currentMonth.getMonth() && 
+                            today.getFullYear() === currentMonth.getFullYear();
+      
+      // Small delay to ensure the new month's content is rendered
+      setTimeout(() => {
+        if (isCurrentMonth) {
+          // If navigating to current month, scroll to today/next swing shift
+          scrollToRelevantDate();
+        } else {
+          // For other months, scroll to top
+          scrollViewRef.current?.scrollTo({ y: 0, animated: true });
+        }
+      }, 100);
+    }
+  }, [currentMonth]);
 
   const loadData = async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
@@ -150,23 +182,82 @@ export default function SwingShiftsScreen() {
     }
   };
 
+  const getTargetDate = (): Date => {
+    const today = new Date();
+    const dayOfWeek = today.getDay();
+    
+    // If today is a swing shift day (Mon-Thu) and in current month
+    if (dayOfWeek >= 1 && dayOfWeek <= 4 && 
+        today.getMonth() === currentMonth.getMonth() && 
+        today.getFullYear() === currentMonth.getFullYear()) {
+      return today;
+    }
+    
+    // Otherwise, find the next swing shift day
+    const targetDate = new Date(today);
+    
+    // If we're viewing a different month, start from beginning of that month
+    if (today.getMonth() !== currentMonth.getMonth() || 
+        today.getFullYear() !== currentMonth.getFullYear()) {
+      return new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
+    }
+    
+    // Find next Monday-Thursday
+    while (targetDate.getDay() === 0 || targetDate.getDay() === 5 || targetDate.getDay() === 6) {
+      targetDate.setDate(targetDate.getDate() + 1);
+    }
+    
+    return targetDate;
+  };
+
+  const scrollToRelevantDate = () => {
+    const swingDates = getSwingShiftDatesForMonth(currentMonth);
+    const targetDate = getTargetDate();
+    
+    // Find the index of the target date
+    const targetIndex = swingDates.findIndex(date => 
+      formatDate(date) === formatDate(targetDate)
+    );
+    
+    if (targetIndex !== -1 && scrollViewRef.current) {
+      // Estimate the position (each card is roughly 200px in height)
+      const estimatedCardHeight = 200;
+      const scrollPosition = targetIndex * estimatedCardHeight;
+      
+      // Delay to ensure layout is complete
+      setTimeout(() => {
+        scrollViewRef.current?.scrollTo({
+          y: scrollPosition,
+          animated: true
+        });
+      }, 100);
+    }
+  };
+
   const navigateMonth = (direction: 'prev' | 'next') => {
     const newDate = new Date(currentMonth);
     newDate.setMonth(newDate.getMonth() + (direction === 'prev' ? -1 : 1));
     setCurrentMonth(newDate);
+    // Scroll will be handled by useEffect
   };
 
   const jumpToToday = () => {
-    setCurrentMonth(new Date());
+    const today = new Date();
+    setCurrentMonth(today);
+    // Trigger scroll after state update
+    setTimeout(() => {
+      setHasScrolledToToday(false);
+    }, 50);
   };
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <View style={[styles.container, { paddingTop: insets.top }]}>
+        <StatusBar style="dark" />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#007AFF" />
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
@@ -174,7 +265,9 @@ export default function SwingShiftsScreen() {
   const monthTitle = currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
+      <View style={[styles.statusBarBackground, { height: insets.top }]} />
+      <StatusBar style="dark" />
       <View style={styles.header}>
         <View style={styles.monthNavigation}>
           <TouchableOpacity onPress={() => navigateMonth('prev')} style={styles.navButton}>
@@ -190,6 +283,7 @@ export default function SwingShiftsScreen() {
       </View>
       
       <ScrollView
+        ref={scrollViewRef}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -212,7 +306,7 @@ export default function SwingShiftsScreen() {
           />
         ))}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -220,6 +314,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F2F2F7',
+  },
+  statusBarBackground: {
+    backgroundColor: '#fff',
   },
   loadingContainer: {
     flex: 1,

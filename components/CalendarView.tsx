@@ -83,8 +83,8 @@ export default function CalendarView({ selectedDoctor, onSelectDoctor, onSetting
       const { start, end } = getMultiMonthBounds(year, month, 4);
       
       const [schedulesData, holidaysData] = await Promise.all([
-        api.getSchedules(start, end),
-        api.getHolidays(start, end),
+        api.getSchedules(start, end, isRefresh),
+        api.getHolidays(start, end, isRefresh),
       ]);
 
       // Merge with existing data to build up cache over time
@@ -302,7 +302,7 @@ export default function CalendarView({ selectedDoctor, onSelectDoctor, onSetting
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F2F2F7',
+    backgroundColor: '#fff',
   },
   scrollView: {
     flex: 1,

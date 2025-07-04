@@ -52,8 +52,15 @@ export function FilterProvider({ children }: { children: ReactNode }) {
   const setDefaultDoctor = async (doctor: string) => {
     setDefaultDoctorState(doctor);
     await AsyncStorage.setItem('default_doctor_filter', doctor);
-    // Don't automatically update current filters when default changes
-    // Users can manually set each screen to their preference
+    
+    // Apply the default to both screens immediately
+    if (doctor === 'All') {
+      setSelectedDoctorCalendar(undefined);
+      setSelectedDoctorRequests(undefined);
+    } else {
+      setSelectedDoctorCalendar(doctor);
+      setSelectedDoctorRequests(doctor);
+    }
   };
 
   if (isLoading) {

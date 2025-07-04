@@ -6,10 +6,6 @@ import React from 'react';
 export default function TabLayout() {
   const colorScheme = useColorScheme();
   const tintColor = colorScheme === 'dark' ? '#fff' : '#007AFF';
-  const tabBarStyle = {
-    backgroundColor: colorScheme === 'dark' ? '#000' : '#fff',
-    borderTopColor: colorScheme === 'dark' ? '#333' : '#e5e5e5',
-  };
 
   return (
     <Tabs
@@ -17,12 +13,16 @@ export default function TabLayout() {
         tabBarActiveTintColor: tintColor,
         tabBarInactiveTintColor: colorScheme === 'dark' ? '#666' : '#999',
         headerShown: false,
-        tabBarStyle,
+        tabBarStyle: {
+          backgroundColor: colorScheme === 'dark' ? '#000' : '#fff',
+          borderTopColor: colorScheme === 'dark' ? '#333' : '#e5e5e5',
+        },
       }}>
       <Tabs.Screen
         name="index"
         options={{
           title: 'Schedule',
+          headerShown: false,
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="calendar" size={size} color={color} />
           ),
@@ -32,6 +32,7 @@ export default function TabLayout() {
         name="swing-shifts"
         options={{
           title: 'Swing Shifts',
+          headerShown: false,
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="time-outline" size={size} color={color} />
           ),
@@ -41,6 +42,7 @@ export default function TabLayout() {
         name="requests"
         options={{
           title: 'Requests',
+          headerShown: false,
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="create-outline" size={size} color={color} />
           ),
@@ -50,6 +52,7 @@ export default function TabLayout() {
         name="settings"
         options={{
           title: 'Settings',
+          headerShown: false,
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="person-circle-outline" size={size} color={color} />
           ),

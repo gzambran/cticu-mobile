@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "CTICU Schedule",
+    "name": "CTICU",
     "slug": "cticu-mobile",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -8,9 +8,11 @@
     "scheme": "cticumobile",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "backgroundColor": "#ffffff",
     "ios": {
       "bundleIdentifier": "com.zambrano.cticuschedule",
-      "buildNumber": "2",
+      "buildNumber": "7",
+      "displayName": "CTICU",
       "supportsTablet": false,
       "infoPlist": {
         "NSAppTransportSecurity": {

@@ -1,24 +1,28 @@
 import CalendarView from '@/components/CalendarView';
 import { useFilter } from '@/contexts/FilterContext';
+import { StatusBar } from 'expo-status-bar';
 import React from 'react';
-import { SafeAreaView, StyleSheet } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function ScheduleScreen() {
   const { selectedDoctorCalendar, setSelectedDoctorCalendar } = useFilter();
+  const insets = useSafeAreaInsets();
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
+      <StatusBar style="dark" />
       <CalendarView 
         selectedDoctor={selectedDoctorCalendar} 
         onSelectDoctor={setSelectedDoctorCalendar}
       />
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F2F2F7',
+    backgroundColor: '#fff',
   },
 });

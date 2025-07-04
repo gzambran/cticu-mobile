@@ -4,21 +4,23 @@ import { useFilter } from '@/contexts/FilterContext';
 import authService from '@/services/auth';
 import React, { useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    RefreshControl,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View,
+  ActivityIndicator,
+  Alert,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 
 interface Unavailability {
   [doctor: string]: string[];
 }
 
 export default function RequestsScreen() {
+  const insets = useSafeAreaInsets();
   const [doctors, setDoctors] = useState<string[]>([]);
   const [unavailability, setUnavailability] = useState<Unavailability>({});
   const [loading, setLoading] = useState(true);
@@ -119,11 +121,13 @@ export default function RequestsScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <View style={styles.container}>
+        <View style={[styles.statusBarBackground, { height: insets.top }]} />
+        <StatusBar style="dark" />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#007AFF" />
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
@@ -134,13 +138,15 @@ export default function RequestsScreen() {
   const displayDoctors = selectedDoctorRequests ? [selectedDoctorRequests] : doctors;
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
+      <View style={[styles.statusBarBackground, { height: insets.top }]} />
+      <StatusBar style="dark" />
       <View style={styles.header}>
         <DoctorFilter
           selectedDoctor={selectedDoctorRequests}
           onSelectDoctor={setSelectedDoctorRequests}
         />
-        <Text style={styles.quarterLabel}>{quarterName} requests</Text>
+        <Text style={styles.quarterLabel}>{quarterName} Requests</Text>
       </View>
       
       <ScrollView
@@ -165,7 +171,7 @@ export default function RequestsScreen() {
           />
         ))}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -173,6 +179,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F2F2F7',
+  },
+  statusBarBackground: {
+    backgroundColor: '#fff',
   },
   loadingContainer: {
     flex: 1,

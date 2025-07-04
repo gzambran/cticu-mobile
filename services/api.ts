@@ -106,14 +106,15 @@ class ApiService {
     return null;
   }
 
-  async getDoctors(): Promise<string[]> {
+  async getDoctors(forceRefresh = false): Promise<string[]> {
     return this.fetchWithCache<string[]>(
       'doctors',
-      `/api/doctors`
+      `/api/doctors`,
+      forceRefresh
     );
   }
 
-  async getSchedules(startDate: string, endDate: string): Promise<Schedule> {
+  async getSchedules(startDate: string, endDate: string, forceRefresh = false): Promise<Schedule> {
     // Validate date format
     const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
     if (!dateRegex.test(startDate) || !dateRegex.test(endDate)) {
@@ -123,18 +124,20 @@ class ApiService {
     const cacheKey = `schedules_${startDate}_${endDate}`;
     return this.fetchWithCache<Schedule>(
       cacheKey,
-      `/api/schedules?startDate=${startDate}&endDate=${endDate}`
+      `/api/schedules?startDate=${startDate}&endDate=${endDate}`,
+      forceRefresh
     );
   }
 
-  async getUnavailability(): Promise<Unavailability> {
+  async getUnavailability(forceRefresh = false): Promise<Unavailability> {
     return this.fetchWithCache<Unavailability>(
       'unavailability',
-      `/api/unavailability`
+      `/api/unavailability`,
+      forceRefresh
     );
   }
 
-  async getHolidays(startDate: string, endDate: string): Promise<Holidays> {
+  async getHolidays(startDate: string, endDate: string, forceRefresh = false): Promise<Holidays> {
     // Validate date format
     const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
     if (!dateRegex.test(startDate) || !dateRegex.test(endDate)) {
@@ -144,7 +147,8 @@ class ApiService {
     const cacheKey = `holidays_${startDate}_${endDate}`;
     return this.fetchWithCache<Holidays>(
       cacheKey,
-      `/api/holidays?startDate=${startDate}&endDate=${endDate}`
+      `/api/holidays?startDate=${startDate}&endDate=${endDate}`,
+      forceRefresh
     );
   }
 

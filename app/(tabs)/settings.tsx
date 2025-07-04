@@ -7,19 +7,21 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Linking from 'expo-linking';
 import React, { useEffect, useState } from 'react';
 import {
-    Alert,
-    FlatList,
-    Modal,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Switch,
-    Text,
-    TouchableOpacity,
-    View,
+  Alert,
+  FlatList,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 
 export default function SettingsScreen() {
+  const insets = useSafeAreaInsets();
   const { signOut } = useAuth();
   const { defaultDoctor, setDefaultDoctor } = useFilter();
   const [firstDayMonday, setFirstDayMonday] = useState(false);
@@ -96,7 +98,9 @@ export default function SettingsScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
+      <View style={[styles.statusBarBackground, { height: insets.top }]} />
+      <StatusBar style="dark" />
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Settings</Text>
       </View>
@@ -212,7 +216,7 @@ export default function SettingsScreen() {
           />
         </View>
       </Modal>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -220,6 +224,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F2F2F7',
+  },
+  statusBarBackground: {
+    backgroundColor: '#fff',
   },
   header: {
     alignItems: 'center',

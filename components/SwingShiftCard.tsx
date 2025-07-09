@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   StyleSheet,
   Text,
@@ -33,6 +33,12 @@ export default function SwingShiftCard({
   // Use ReturnType<typeof setTimeout> for React Native compatibility
   const censusDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const casesDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Update local state when props change (e.g., after pull-to-refresh)
+  useEffect(() => {
+    setUnitCensus(details.unitCensus || '');
+    setCases(details.cases || '');
+  }, [details.unitCensus, details.cases]);
 
   const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
   const monthName = date.toLocaleDateString('en-US', { month: 'short' });

@@ -6,6 +6,7 @@ node_modules/
 dist/
 web-build/
 expo-env.d.ts
+*.expo-shared
 
 # Native
 .kotlin/
@@ -29,9 +30,111 @@ yarn-error.*
 *.pem
 
 # local env files
+.env
 .env*.local
+.env.development
+.env.production
+.env.test
 
 # typescript
 *.tsbuildinfo
 
-app-example
+# iOS
+ios/Pods/
+ios/build/
+ios/DerivedData/
+ios/.xcode.env.local
+*.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+*.xcodeproj/project.xcworkspace/xcuserdata/
+
+# Android
+android/build/
+android/gradle/
+android/.gradle/
+android/local.properties
+android/app/build/
+android/app/release/
+android/.idea/
+*.iml
+*.hprof
+/android/app/debug
+/android/app/release
+
+# Testing
+coverage/
+*.lcov
+.nyc_output/
+
+# IDE - VSCode
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+
+# IDE - IntelliJ/WebStorm
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Logs
+logs/
+*.log
+lerna-debug.log*
+
+# OS generated files
+Thumbs.db
+.Spotlight-V100
+.Trashes
+
+# EAS Build artifacts
+build-*.tar.gz
+*.ipa
+*.apk
+*.aab
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# Lock files (optional - some teams prefer to commit these)
+# yarn.lock
+# package-lock.json
+# pnpm-lock.yaml
+
+# Secrets and credentials
+*.keystore
+google-services.json
+GoogleService-Info.plist
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots
+fastlane/test_output
+
+# Project specific
+app-example/
+.expo-shared/
+
+# Bundle artifacts
+*.bundle
+*.map
+
+# React Native
+.bundle/
+
+# Buck
+buck-out/
+\.buckd/
+*.keystore.properties
+
+# fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots
+fastlane/test_output

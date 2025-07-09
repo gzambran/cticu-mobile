@@ -1,16 +1,14 @@
 import { formatDate, parseDate } from '@/utils/date';
 import { Ionicons } from '@expo/vector-icons';
-import DateTimePicker from '@react-native-community/datetimepicker';
 import React, { useState } from 'react';
 import {
-    Alert,
-    Modal,
-    Platform,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Alert,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from 'react-native';
+import DatePicker from 'react-native-date-picker';
 
 interface RequestManagementCardProps {
   doctor: string;
@@ -74,126 +72,6 @@ export default function RequestManagementCard({
         },
       ]
     );
-  };
-
-  const handleStartDateChange = (event: any, selectedDate?: Date) => {
-    if (Platform.OS === 'android') {
-      setShowStartPicker(false);
-    }
-    
-    if (selectedDate) {
-      setStartDate(selectedDate);
-      // Automatically set end date to match start date for better UX
-      setEndDate(selectedDate);
-    }
-  };
-
-  const handleEndDateChange = (event: any, selectedDate?: Date) => {
-    if (Platform.OS === 'android') {
-      setShowEndPicker(false);
-    }
-    
-    if (selectedDate) {
-      setEndDate(selectedDate);
-    }
-  };
-
-  const renderDatePicker = () => {
-    if (Platform.OS === 'ios') {
-      return (
-        <>
-          {showStartPicker && (
-            <Modal
-              animationType="slide"
-              transparent={true}
-              visible={showStartPicker}
-              onRequestClose={() => setShowStartPicker(false)}
-            >
-              <TouchableOpacity 
-                style={styles.modalOverlay}
-                activeOpacity={1}
-                onPress={() => setShowStartPicker(false)}
-              >
-                <View style={styles.modalContent}>
-                  <View style={styles.modalHeader}>
-                    <TouchableOpacity onPress={() => setShowStartPicker(false)}>
-                      <Text style={styles.modalCancel}>Cancel</Text>
-                    </TouchableOpacity>
-                    <Text style={styles.modalTitle}>Select Start Date</Text>
-                    <TouchableOpacity onPress={() => setShowStartPicker(false)}>
-                      <Text style={styles.modalDone}>Done</Text>
-                    </TouchableOpacity>
-                  </View>
-                  <DateTimePicker
-                    value={startDate}
-                    mode="date"
-                    display="spinner"
-                    minimumDate={minDate}
-                    onChange={handleStartDateChange}
-                  />
-                </View>
-              </TouchableOpacity>
-            </Modal>
-          )}
-
-          {showEndPicker && (
-            <Modal
-              animationType="slide"
-              transparent={true}
-              visible={showEndPicker}
-              onRequestClose={() => setShowEndPicker(false)}
-            >
-              <TouchableOpacity 
-                style={styles.modalOverlay}
-                activeOpacity={1}
-                onPress={() => setShowEndPicker(false)}
-              >
-                <View style={styles.modalContent}>
-                  <View style={styles.modalHeader}>
-                    <TouchableOpacity onPress={() => setShowEndPicker(false)}>
-                      <Text style={styles.modalCancel}>Cancel</Text>
-                    </TouchableOpacity>
-                    <Text style={styles.modalTitle}>Select End Date</Text>
-                    <TouchableOpacity onPress={() => setShowEndPicker(false)}>
-                      <Text style={styles.modalDone}>Done</Text>
-                    </TouchableOpacity>
-                  </View>
-                  <DateTimePicker
-                    value={endDate}
-                    mode="date"
-                    display="spinner"
-                    minimumDate={startDate}
-                    onChange={handleEndDateChange}
-                  />
-                </View>
-              </TouchableOpacity>
-            </Modal>
-          )}
-        </>
-      );
-    } else {
-      // Android
-      return (
-        <>
-          {showStartPicker && (
-            <DateTimePicker
-              value={startDate}
-              mode="date"
-              minimumDate={minDate}
-              onChange={handleStartDateChange}
-            />
-          )}
-          {showEndPicker && (
-            <DateTimePicker
-              value={endDate}
-              mode="date"
-              minimumDate={startDate}
-              onChange={handleEndDateChange}
-            />
-          )}
-        </>
-      );
-    }
   };
 
   return (
@@ -273,7 +151,43 @@ export default function RequestManagementCard({
         </View>
       </View>
 
-      {renderDatePicker()}
+      {/* Date Pickers using react-native-date-picker */}
+      <DatePicker
+        modal
+        mode="date"
+        open={showStartPicker}
+        date={startDate}
+        minimumDate={minDate}
+        onConfirm={(date) => {
+          setStartDate(date);
+          setEndDate(date); // Set end date to match for better UX
+          setShowStartPicker(false);
+        }}
+        onCancel={() => setShowStartPicker(false)}
+        title="Select Start Date"
+        confirmText="Done"
+        cancelText="Cancel"
+        theme="light"
+        locale="en"
+      />
+
+      <DatePicker
+        modal
+        mode="date"
+        open={showEndPicker}
+        date={endDate}
+        minimumDate={startDate}
+        onConfirm={(date) => {
+          setEndDate(date);
+          setShowEndPicker(false);
+        }}
+        onCancel={() => setShowEndPicker(false)}
+        title="Select End Date"
+        confirmText="Done"
+        cancelText="Cancel"
+        theme="light"
+        locale="en"
+      />
     </View>
   );
 }
@@ -386,38 +300,5 @@ const styles = StyleSheet.create({
   dateBadgeText: {
     fontSize: 14,
     color: '#000',
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
-  },
-  modalContent: {
-    backgroundColor: 'white',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    paddingBottom: 34,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#E5E5EA',
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#000',
-  },
-  modalCancel: {
-    fontSize: 16,
-    color: '#007AFF',
-  },
-  modalDone: {
-    fontSize: 16,
-    color: '#007AFF',
-    fontWeight: '600',
   },
 });

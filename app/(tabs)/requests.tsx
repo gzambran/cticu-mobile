@@ -1,7 +1,9 @@
-import DoctorFilter from '@/components/DoctorFilter';
+import DoctorPickerModal from '@/components/DoctorPickerModal';
 import RequestManagementCard from '@/components/RequestManagementCard';
+import { useDoctors } from '@/contexts/DoctorsContext';
 import { useFilter } from '@/contexts/FilterContext';
 import authService from '@/services/auth';
+import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -13,7 +15,6 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { StatusBar } from 'expo-status-bar';
 
 interface Unavailability {
   [doctor: string]: string[];
@@ -21,7 +22,7 @@ interface Unavailability {
 
 export default function RequestsScreen() {
   const insets = useSafeAreaInsets();
-  const [doctors, setDoctors] = useState<string[]>([]);
+  const { doctors } = useDoctors();
   const [unavailability, setUnavailability] = useState<Unavailability>({});
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -36,19 +37,13 @@ export default function RequestsScreen() {
     else setLoading(true);
 
     try {
-      const [doctorsResponse, unavailabilityResponse] = await Promise.all([
-        authService.authenticatedFetch('/api/doctors'),
-        authService.authenticatedFetch('/api/unavailability'),
-      ]);
+      const unavailabilityResponse = await authService.authenticatedFetch('/api/unavailability');
 
-      if (!doctorsResponse.ok || !unavailabilityResponse.ok) {
+      if (!unavailabilityResponse.ok) {
         throw new Error('Failed to load data');
       }
 
-      const doctorsData = await doctorsResponse.json();
       const unavailabilityData = await unavailabilityResponse.json();
-
-      setDoctors(doctorsData);
       setUnavailability(unavailabilityData);
     } catch (error) {
       Alert.alert('Error', 'Failed to load data. Please try again.');
@@ -142,9 +137,11 @@ export default function RequestsScreen() {
       <View style={[styles.statusBarBackground, { height: insets.top }]} />
       <StatusBar style="dark" />
       <View style={styles.header}>
-        <DoctorFilter
+        <DoctorPickerModal
           selectedDoctor={selectedDoctorRequests}
           onSelectDoctor={setSelectedDoctorRequests}
+          doctors={doctors}
+          includeAllOption={true}
         />
         <Text style={styles.quarterLabel}>{quarterName} Requests</Text>
       </View>
@@ -193,7 +190,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 16,
+    height: 56,
     backgroundColor: 'white',
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: '#C6C6C8',

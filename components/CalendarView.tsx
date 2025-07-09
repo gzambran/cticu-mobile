@@ -12,12 +12,13 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useDoctors } from '../contexts/DoctorsContext';
 import api, { ApiError } from '../services/api';
 import { AuthError, NetworkError } from '../services/auth';
 import { Holidays, Schedule, SHIFT_COLORS, ShiftType } from '../types';
 import { formatDate, getCalendarDays, getMultiMonthBounds } from '../utils/date';
 import DayCell from './DayCell';
-import DoctorFilter from './DoctorFilter';
+import DoctorPickerModal from './DoctorPickerModal';
 import OfflineIndicator from './OfflineIndicator';
 
 interface CalendarViewProps {
@@ -36,6 +37,7 @@ export default function CalendarView({ selectedDoctor, onSelectDoctor, onSetting
   const [isOffline, setIsOffline] = useState(false);
   const [firstDayMonday, setFirstDayMonday] = useState(false);
   const [lastLoadedMonth, setLastLoadedMonth] = useState<{ year: number; month: number } | null>(null);
+  const { doctors } = useDoctors();
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
@@ -138,9 +140,11 @@ export default function CalendarView({ selectedDoctor, onSelectDoctor, onSetting
 
   const renderHeader = () => (
     <View style={styles.header}>
-      <DoctorFilter
+      <DoctorPickerModal
         selectedDoctor={selectedDoctor}
         onSelectDoctor={onSelectDoctor}
+        doctors={doctors}
+        includeAllOption={true}
       />
       
       <View style={styles.monthNavigation}>
@@ -312,7 +316,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 16,
+    height: 56,
     backgroundColor: 'white',
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: '#C6C6C8',

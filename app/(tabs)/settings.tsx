@@ -1,15 +1,15 @@
+import DoctorPickerModal from '@/components/DoctorPickerModal';
 import { useAuth } from '@/contexts/AuthContext';
+import { useDoctors } from '@/contexts/DoctorsContext';
 import { useFilter } from '@/contexts/FilterContext';
 import api from '@/services/api';
-import { DOCTORS } from '@/types';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Linking from 'expo-linking';
+import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useState } from 'react';
 import {
   Alert,
-  FlatList,
-  Modal,
   ScrollView,
   StyleSheet,
   Switch,
@@ -18,16 +18,13 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { StatusBar } from 'expo-status-bar';
 
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
   const { signOut } = useAuth();
   const { defaultDoctor, setDefaultDoctor } = useFilter();
+  const { doctors } = useDoctors();
   const [firstDayMonday, setFirstDayMonday] = useState(false);
-  const [doctorModalVisible, setDoctorModalVisible] = useState(false);
-
-  const doctors = ['All', ...DOCTORS];
 
   useEffect(() => {
     loadSettings();
@@ -50,8 +47,7 @@ export default function SettingsScreen() {
   };
 
   const handleSelectDefaultDoctor = async (doctor: string) => {
-    await setDefaultDoctor(doctor);
-    setDoctorModalVisible(false);
+    await setDefaultDoctor(doctor || 'All');
   };
 
   const handleClearCache = async () => {
@@ -122,19 +118,20 @@ export default function SettingsScreen() {
             />
           </View>
           
-          <TouchableOpacity 
-            style={styles.settingRow} 
-            onPress={() => setDoctorModalVisible(true)}
-          >
+          <View style={styles.settingRow}>
             <View style={styles.settingInfo}>
               <Ionicons name="person-outline" size={20} color="#007AFF" />
               <Text style={styles.settingText}>Default Doctor Filter</Text>
             </View>
-            <View style={styles.settingValueContainer}>
-              <Text style={styles.settingValue}>{defaultDoctor}</Text>
-              <Ionicons name="chevron-forward" size={20} color="#C7C7CC" />
-            </View>
-          </TouchableOpacity>
+            <DoctorPickerModal
+              selectedDoctor={defaultDoctor}
+              onSelectDoctor={(doctor) => handleSelectDefaultDoctor(doctor || 'All')}
+              doctors={doctors}
+              includeAllOption={true}
+              triggerStyle={styles.doctorPickerTrigger}
+              triggerTextStyle={styles.settingValue}
+            />
+          </View>
         </View>
 
         <View style={styles.section}>
@@ -166,7 +163,7 @@ export default function SettingsScreen() {
           
           <View style={styles.settingRow}>
             <Text style={styles.settingText}>Version</Text>
-            <Text style={styles.settingValue}>1.0.0</Text>
+            <Text style={styles.settingValue}>1.0.1</Text>
           </View>
         </View>
 
@@ -179,43 +176,6 @@ export default function SettingsScreen() {
           </TouchableOpacity>
         </View>
       </ScrollView>
-
-      {/* Doctor Selection Modal */}
-      <Modal
-        visible={doctorModalVisible}
-        animationType="slide"
-        presentationStyle="pageSheet"
-        onRequestClose={() => setDoctorModalVisible(false)}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Default Doctor Filter</Text>
-            <TouchableOpacity
-              onPress={() => setDoctorModalVisible(false)}
-              style={styles.closeButton}
-            >
-              <Ionicons name="close" size={24} color="#007AFF" />
-            </TouchableOpacity>
-          </View>
-
-          <FlatList
-            data={doctors}
-            keyExtractor={(item) => item}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                style={styles.doctorItem}
-                onPress={() => handleSelectDefaultDoctor(item)}
-              >
-                <Text style={styles.doctorName}>{item}</Text>
-                {item === defaultDoctor && (
-                  <Ionicons name="checkmark" size={20} color="#007AFF" />
-                )}
-              </TouchableOpacity>
-            )}
-            ItemSeparatorComponent={() => <View style={styles.separator} />}
-          />
-        </View>
-      </Modal>
     </View>
   );
 }
@@ -229,11 +189,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   header: {
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'white',
     paddingHorizontal: 16,
-    paddingVertical: 16,
+    height: 56,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: '#C6C6C8',
   },
@@ -279,10 +240,14 @@ const styles = StyleSheet.create({
   settingValue: {
     fontSize: 17,
     color: '#8E8E93',
+    fontWeight: 'normal',
   },
-  settingValueContainer: {
+  doctorPickerTrigger: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: 'transparent',
+    paddingHorizontal: 0,
+    paddingVertical: 0,
     gap: 8,
   },
   signOutButton: {
@@ -292,49 +257,5 @@ const styles = StyleSheet.create({
     fontSize: 17,
     color: '#FF3B30',
     textAlign: 'center',
-  },
-  modalContainer: {
-    flex: 1,
-    backgroundColor: '#F2F2F7',
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 20,
-    backgroundColor: 'white',
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#C6C6C8',
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#000',
-  },
-  closeButton: {
-    padding: 8,
-  },
-  doctorItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    backgroundColor: 'white',
-  },
-  doctorName: {
-    fontSize: 17,
-    color: '#000',
-  },
-  separator: {
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: '#C6C6C8',
-    marginLeft: 20,
-  },
-  helperText: {
-    fontSize: 13,
-    color: '#8E8E93',
-    paddingHorizontal: 20,
-    paddingTop: 8,
   },
 });

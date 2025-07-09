@@ -1,4 +1,5 @@
 import SwingShiftCard from '@/components/SwingShiftCard';
+import { useDoctors } from '@/contexts/DoctorsContext';
 import authService from '@/services/auth';
 import { Schedule } from '@/types';
 import { formatDate } from '@/utils/date';
@@ -26,7 +27,7 @@ interface SwingDetails {
 
 export default function SwingShiftsScreen() {
   const insets = useSafeAreaInsets();
-  const [doctors, setDoctors] = useState<string[]>([]);
+  const { doctors, refreshDoctors } = useDoctors();
   const [schedules, setSchedules] = useState<Schedule>({});
   const [swingDetails, setSwingDetails] = useState<SwingDetails>({});
   const [loading, setLoading] = useState(true);
@@ -89,24 +90,26 @@ export default function SwingShiftsScreen() {
       const startStr = formatDate(startDate);
       const endStr = formatDate(endDate);
 
-      // Load all data
-      const [doctorsResponse, schedulesResponse, swingDetailsResponse] = await Promise.all([
-        authService.authenticatedFetch('/api/doctors'),
+      // Load data - doctors are now coming from context
+      const [schedulesResponse, swingDetailsResponse] = await Promise.all([
         authService.authenticatedFetch(`/api/schedules?startDate=${startStr}&endDate=${endStr}`),
         authService.authenticatedFetch(`/api/swing-shift-details?startDate=${startStr}&endDate=${endStr}`),
       ]);
 
-      if (!doctorsResponse.ok || !schedulesResponse.ok || !swingDetailsResponse.ok) {
+      if (!schedulesResponse.ok || !swingDetailsResponse.ok) {
         throw new Error('Failed to load data');
       }
 
-      const doctorsData = await doctorsResponse.json();
       const schedulesData = await schedulesResponse.json();
       const swingDetailsData = await swingDetailsResponse.json();
 
-      setDoctors(doctorsData);
       setSchedules(schedulesData);
       setSwingDetails(swingDetailsData);
+
+      // If refresh, also refresh doctors
+      if (isRefresh) {
+        await refreshDoctors();
+      }
     } catch (error) {
       Alert.alert('Error', 'Failed to load data. Please try again.');
     } finally {
@@ -212,17 +215,36 @@ export default function SwingShiftsScreen() {
 
   const scrollToRelevantDate = () => {
     const swingDates = getSwingShiftDatesForMonth(currentMonth);
-    const targetDate = getTargetDate();
+    const today = new Date();
     
-    // Find the index of the target date
-    const targetIndex = swingDates.findIndex(date => 
-      formatDate(date) === formatDate(targetDate)
-    );
+    // Find the target date
+    let targetIndex = -1;
+    
+    // If viewing current month, find today or next swing shift
+    if (today.getMonth() === currentMonth.getMonth() && 
+        today.getFullYear() === currentMonth.getFullYear()) {
+      
+      // First, try to find today's date if it's a swing shift day
+      const todayFormatted = formatDate(today);
+      targetIndex = swingDates.findIndex(date => formatDate(date) === todayFormatted);
+      
+      // If today isn't a swing shift day or not found, find the next upcoming one
+      if (targetIndex === -1) {
+        targetIndex = swingDates.findIndex(date => date >= today);
+      }
+    }
+    
+    // If still not found or viewing a different month, default to first date
+    if (targetIndex === -1) {
+      targetIndex = 0;
+    }
     
     if (targetIndex !== -1 && scrollViewRef.current) {
-      // Estimate the position (each card is roughly 200px in height)
-      const estimatedCardHeight = 200;
-      const scrollPosition = targetIndex * estimatedCardHeight;
+      // More accurate card height calculation
+      // Card has: padding top (16) + date section + 3 fields with gaps + padding bottom (16)
+      // Approximately 250-280px per card
+      const estimatedCardHeight = 280;
+      const scrollPosition = Math.max(0, targetIndex * estimatedCardHeight - 50); // 50px offset to show some context
       
       // Delay to ensure layout is complete
       setTimeout(() => {
@@ -230,7 +252,7 @@ export default function SwingShiftsScreen() {
           y: scrollPosition,
           animated: true
         });
-      }, 100);
+      }, 200); // Increased delay for better reliability
     }
   };
 
@@ -328,7 +350,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 16,
+    height: 56,
     backgroundColor: 'white',
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: '#C6C6C8',

@@ -33,6 +33,3 @@ export const SHIFT_COLORS = {
   'Night': '#0000FF', // Blue
   'Swing': '#00AA00', // Green (keeping as is)
 } as const;
-
-export const DOCTORS = ['CG', 'RV', 'ZZ', 'MO', 'HW', 'NK', 'OE'] as const;
-export type Doctor = typeof DOCTORS[number];

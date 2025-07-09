@@ -2,7 +2,7 @@
   "expo": {
     "name": "CTICU",
     "slug": "cticu-mobile",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "cticumobile",
@@ -11,7 +11,7 @@
     "backgroundColor": "#ffffff",
     "ios": {
       "bundleIdentifier": "com.zambrano.cticuschedule",
-      "buildNumber": "7",
+      "buildNumber": "8",
       "displayName": "CTICU",
       "supportsTablet": false,
       "infoPlist": {
@@ -33,7 +33,7 @@
         "backgroundColor": "#ffffff"
       },
       "package": "com.zambrano.cticuschedule",
-      "versionCode": 1,
+      "versionCode": 2,
       "edgeToEdgeEnabled": true
     },
     "web": {

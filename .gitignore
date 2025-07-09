@@ -40,6 +40,7 @@ yarn-error.*
 *.tsbuildinfo
 
 # iOS
+ios/
 ios/Pods/
 ios/build/
 ios/DerivedData/
@@ -49,6 +50,7 @@ ios/.xcode.env.local
 *.xcodeproj/project.xcworkspace/xcuserdata/
 
 # Android
+android/
 android/build/
 android/gradle/
 android/.gradle/
@@ -137,4 +139,4 @@ buck-out/
 fastlane/report.xml
 fastlane/Preview.html
 fastlane/screenshots
-fastlane/test_outputios/
+fastlane/test_output

@@ -1,7 +1,5 @@
-import DoctorPickerModal from '@/components/DoctorPickerModal';
 import RequestManagementCard from '@/components/RequestManagementCard';
-import { useDoctors } from '@/contexts/DoctorsContext';
-import { useFilter } from '@/contexts/FilterContext';
+import { useAuth } from '@/contexts/AuthContext';
 import authService from '@/services/auth';
 import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useState } from 'react';
@@ -16,17 +14,12 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-interface Unavailability {
-  [doctor: string]: string[];
-}
-
 export default function RequestsScreen() {
   const insets = useSafeAreaInsets();
-  const { doctors } = useDoctors();
-  const [unavailability, setUnavailability] = useState<Unavailability>({});
+  const { user } = useAuth();
+  const [unavailability, setUnavailability] = useState<{ [doctor: string]: string[] }>({});
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const { selectedDoctorRequests, setSelectedDoctorRequests } = useFilter();
 
   useEffect(() => {
     loadData();
@@ -37,14 +30,12 @@ export default function RequestsScreen() {
     else setLoading(true);
 
     try {
-      const unavailabilityResponse = await authService.authenticatedFetch('/api/unavailability');
-
-      if (!unavailabilityResponse.ok) {
+      const response = await authService.authenticatedFetch('/api/unavailability');
+      if (!response.ok) {
         throw new Error('Failed to load data');
       }
-
-      const unavailabilityData = await unavailabilityResponse.json();
-      setUnavailability(unavailabilityData);
+      const data = await response.json();
+      setUnavailability(data);
     } catch (error) {
       Alert.alert('Error', 'Failed to load data. Please try again.');
     } finally {
@@ -128,22 +119,15 @@ export default function RequestsScreen() {
 
   const upcomingQuarterStart = getUpcomingQuarterStart();
   const quarterName = getQuarterName(upcomingQuarterStart);
-
-  // Get doctors to display based on filter
-  const displayDoctors = selectedDoctorRequests ? [selectedDoctorRequests] : doctors;
+  const userDoctor = user?.fullName || user?.username || '';
 
   return (
     <View style={styles.container}>
       <View style={[styles.statusBarBackground, { height: insets.top }]} />
       <StatusBar style="dark" />
+      
       <View style={styles.header}>
-        <DoctorPickerModal
-          selectedDoctor={selectedDoctorRequests}
-          onSelectDoctor={setSelectedDoctorRequests}
-          doctors={doctors}
-          includeAllOption={true}
-        />
-        <Text style={styles.quarterLabel}>{quarterName} Requests</Text>
+        <Text style={styles.headerTitle}>{quarterName} Vacation Requests</Text>
       </View>
       
       <ScrollView
@@ -156,17 +140,13 @@ export default function RequestsScreen() {
           />
         }
       >
-        {displayDoctors.map((doctor) => (
-          <RequestManagementCard
-            key={doctor}
-            doctor={doctor}
-            unavailableDates={unavailability[doctor] || []}
-            onAddDates={handleAddDates}
-            onRemoveDate={handleRemoveDate}
-            minDate={upcomingQuarterStart}
-            showHeader={!selectedDoctorRequests} // Only show header in "All Doctors" view
-          />
-        ))}
+        <RequestManagementCard
+          doctor={userDoctor}
+          unavailableDates={unavailability[userDoctor] || []}
+          onAddDates={handleAddDates}
+          onRemoveDate={handleRemoveDate}
+          minDate={upcomingQuarterStart}
+        />
       </ScrollView>
     </View>
   );
@@ -186,21 +166,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    height: 56,
     backgroundColor: 'white',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: '#C6C6C8',
   },
-  scrollView: {
-    flex: 1,
-  },
-  quarterLabel: {
-    fontSize: 16,
+  headerTitle: {
+    fontSize: 18,
     fontWeight: '600',
     color: '#000',
+  },
+  scrollView: {
+    flex: 1,
   },
 });

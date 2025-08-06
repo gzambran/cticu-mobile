@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import config from '../config';
-import { Holidays, Schedule, Unavailability } from '../types';
+import { Holidays, Schedule, ShiftChange, ShiftChangeRequest, Unavailability } from '../types';
 import authService, { AuthError, NetworkError } from './auth';
 
 const API_BASE_URL = config.API_BASE_URL;
@@ -150,6 +150,97 @@ class ApiService {
       `/api/holidays?startDate=${startDate}&endDate=${endDate}`,
       forceRefresh
     );
+  }
+
+  // Shift Change Request Methods (no caching for these as they need to be real-time)
+  async getShiftChangeRequests(): Promise<ShiftChangeRequest[]> {
+    try {
+      const response = await authService.authenticatedFetch('/api/shift-change-requests');
+      
+      if (!response.ok) {
+        throw new ApiError(`Request failed with status: ${response.status}`, response.status);
+      }
+
+      return await response.json();
+    } catch (error) {
+      if (error instanceof AuthError || error instanceof NetworkError || error instanceof ApiError) {
+        throw error;
+      }
+      throw new ApiError('Failed to fetch shift change requests');
+    }
+  }
+
+  async createShiftChangeRequest(shifts: ShiftChange[], notes?: string): Promise<void> {
+    try {
+      const response = await authService.authenticatedFetch('/api/shift-change-requests', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ shifts, notes }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new ApiError(
+          errorData?.error || `Request failed with status: ${response.status}`,
+          response.status
+        );
+      }
+    } catch (error) {
+      if (error instanceof AuthError || error instanceof NetworkError || error instanceof ApiError) {
+        throw error;
+      }
+      throw new ApiError('Failed to create shift change request');
+    }
+  }
+
+  async approveShiftChangeRequest(requestId: number): Promise<void> {
+    try {
+      const response = await authService.authenticatedFetch(
+        `/api/shift-change-requests/${requestId}/approve`,
+        {
+          method: 'PUT',
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new ApiError(
+          errorData?.error || `Request failed with status: ${response.status}`,
+          response.status
+        );
+      }
+    } catch (error) {
+      if (error instanceof AuthError || error instanceof NetworkError || error instanceof ApiError) {
+        throw error;
+      }
+      throw new ApiError('Failed to approve shift change request');
+    }
+  }
+
+  async denyShiftChangeRequest(requestId: number): Promise<void> {
+    try {
+      const response = await authService.authenticatedFetch(
+        `/api/shift-change-requests/${requestId}/deny`,
+        {
+          method: 'PUT',
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new ApiError(
+          errorData?.error || `Request failed with status: ${response.status}`,
+          response.status
+        );
+      }
+    } catch (error) {
+      if (error instanceof AuthError || error instanceof NetworkError || error instanceof ApiError) {
+        throw error;
+      }
+      throw new ApiError('Failed to deny shift change request');
+    }
   }
 
   async clearCache(): Promise<void> {

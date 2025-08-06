@@ -1,14 +1,17 @@
 import { formatDate, parseDate } from '@/utils/date';
 import { Ionicons } from '@expo/vector-icons';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import React, { useState } from 'react';
 import {
   Alert,
+  Modal,
+  Platform,
   StyleSheet,
   Text,
   TouchableOpacity,
   View
 } from 'react-native';
-import DatePicker from 'react-native-date-picker';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface RequestManagementCardProps {
   doctor: string;
@@ -27,6 +30,7 @@ export default function RequestManagementCard({
   minDate,
   showHeader = false,
 }: RequestManagementCardProps) {
+  const insets = useSafeAreaInsets();
   const [startDate, setStartDate] = useState(minDate);
   const [endDate, setEndDate] = useState(minDate);
   const [showStartPicker, setShowStartPicker] = useState(false);
@@ -74,121 +78,193 @@ export default function RequestManagementCard({
     );
   };
 
-  return (
-    <View style={styles.card}>
-      {showHeader && (
-        <View style={styles.header}>
-          <Text style={styles.doctorName}>{doctor}</Text>
-          <Text style={styles.requestCount}>
-            {futureDates.length} upcoming request{futureDates.length !== 1 ? 's' : ''}
-          </Text>
+  const onStartDateChange = (event: any, selectedDate?: Date) => {
+    // Always hide picker on Android after any interaction
+    if (Platform.OS === 'android') {
+      setShowStartPicker(false);
+    }
+    
+    if (selectedDate) {
+      setStartDate(selectedDate);
+      // Always set end date to match start date for easier selection
+      setEndDate(selectedDate);
+    }
+  };
+
+  const onEndDateChange = (event: any, selectedDate?: Date) => {
+    // Always hide picker on Android after any interaction
+    if (Platform.OS === 'android') {
+      setShowEndPicker(false);
+    }
+    
+    if (selectedDate) {
+      setEndDate(selectedDate);
+    }
+  };
+
+  const renderIOSDatePicker = (
+    show: boolean,
+    setShow: (value: boolean) => void,
+    value: Date,
+    onChange: (event: any, selectedDate?: Date) => void,
+    title: string
+  ) => {
+    return (
+      <Modal
+        visible={show}
+        transparent={true}
+        animationType="fade" // Changed from 'slide' to 'fade'
+      >
+        <View style={styles.modalContainer}>
+          <TouchableOpacity 
+            style={styles.modalOverlay} 
+            onPress={() => setShow(false)}
+            activeOpacity={1}
+          />
+          <View style={[
+            styles.pickerContainer,
+            { paddingBottom: Math.max(insets.bottom, 20) }
+          ]}>
+            <View style={styles.pickerHeader}>
+              <Text style={styles.pickerTitle}>{title}</Text>
+              <TouchableOpacity onPress={() => setShow(false)}>
+                <Text style={styles.pickerDoneButton}>Done</Text>
+              </TouchableOpacity>
+            </View>
+            <DateTimePicker
+              value={value}
+              mode="date"
+              display="spinner"
+              onChange={onChange}
+              minimumDate={minDate}
+              style={styles.picker}
+            />
+          </View>
         </View>
-      )}
+      </Modal>
+    );
+  };
 
-      <View style={styles.content}>
-        <View style={styles.dateSection}>
-          <Text style={styles.sectionTitle}>Add New Dates</Text>
-          
-          <View style={styles.dateRow}>
-            <View style={styles.dateInput}>
-              <Text style={styles.dateLabel}>Start Date</Text>
-              <TouchableOpacity
-                style={styles.dateButton}
-                onPress={() => setShowStartPicker(true)}
-              >
-                <Text style={styles.dateButtonText}>
-                  {startDate.toLocaleDateString()}
-                </Text>
-              </TouchableOpacity>
+  return (
+    <>
+      <View style={styles.card}>
+        {showHeader && (
+          <View style={styles.header}>
+            <Text style={styles.doctorName}>{doctor}</Text>
+            <Text style={styles.requestCount}>
+              {futureDates.length} upcoming request{futureDates.length !== 1 ? 's' : ''}
+            </Text>
+          </View>
+        )}
+
+        <View style={styles.content}>
+          <View style={styles.dateSection}>
+            <Text style={styles.sectionTitle}>Add New Dates</Text>
+            
+            <View style={styles.dateRow}>
+              <View style={styles.dateInput}>
+                <Text style={styles.dateLabel}>Start Date</Text>
+                <TouchableOpacity
+                  style={styles.dateButton}
+                  onPress={() => setShowStartPicker(true)}
+                >
+                  <Text style={styles.dateButtonText}>
+                    {startDate.toLocaleDateString()}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.dateInput}>
+                <Text style={styles.dateLabel}>End Date</Text>
+                <TouchableOpacity
+                  style={styles.dateButton}
+                  onPress={() => setShowEndPicker(true)}
+                >
+                  <Text style={styles.dateButtonText}>
+                    {endDate.toLocaleDateString()}
+                  </Text>
+                </TouchableOpacity>
+              </View>
             </View>
 
-            <View style={styles.dateInput}>
-              <Text style={styles.dateLabel}>End Date</Text>
-              <TouchableOpacity
-                style={styles.dateButton}
-                onPress={() => setShowEndPicker(true)}
-              >
-                <Text style={styles.dateButtonText}>
-                  {endDate.toLocaleDateString()}
-                </Text>
-              </TouchableOpacity>
-            </View>
+            <TouchableOpacity
+              style={styles.addButton}
+              onPress={handleAddDates}
+            >
+              <Ionicons name="add" size={20} color="white" />
+              <Text style={styles.addButtonText}>Add Dates</Text>
+            </TouchableOpacity>
           </View>
 
-          <TouchableOpacity
-            style={styles.addButton}
-            onPress={handleAddDates}
-          >
-            <Ionicons name="add" size={20} color="white" />
-            <Text style={styles.addButtonText}>Add Dates</Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.currentDates}>
-          <Text style={styles.sectionTitle}>Upcoming Requests</Text>
-          {futureDates.length === 0 ? (
-            <Text style={styles.emptyState}>No upcoming requests</Text>
-          ) : (
-            <View style={styles.datesList}>
-              {futureDates.map(dateStr => {
-                const date = parseDate(dateStr);
-                return (
-                  <View key={dateStr} style={styles.dateBadge}>
-                    <Text style={styles.dateBadgeText}>
-                      {date.toLocaleDateString()}
-                    </Text>
-                    <TouchableOpacity
-                      onPress={() => handleRemoveDate(dateStr)}
-                      hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                    >
-                      <Ionicons name="close" size={18} color="#8E8E93" />
-                    </TouchableOpacity>
-                  </View>
-                );
-              })}
-            </View>
-          )}
+          <View style={styles.currentDates}>
+            <Text style={styles.sectionTitle}>Upcoming Requests</Text>
+            {futureDates.length === 0 ? (
+              <Text style={styles.emptyState}>No upcoming requests</Text>
+            ) : (
+              <View style={styles.datesList}>
+                {futureDates.map(dateStr => {
+                  const date = parseDate(dateStr);
+                  return (
+                    <View key={dateStr} style={styles.dateBadge}>
+                      <Text style={styles.dateBadgeText}>
+                        {date.toLocaleDateString()}
+                      </Text>
+                      <TouchableOpacity
+                        onPress={() => handleRemoveDate(dateStr)}
+                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                      >
+                        <Ionicons name="close" size={18} color="#8E8E93" />
+                      </TouchableOpacity>
+                    </View>
+                  );
+                })}
+              </View>
+            )}
+          </View>
         </View>
       </View>
 
-      {/* Date Pickers using react-native-date-picker */}
-      <DatePicker
-        modal
-        mode="date"
-        open={showStartPicker}
-        date={startDate}
-        minimumDate={minDate}
-        onConfirm={(date) => {
-          setStartDate(date);
-          setEndDate(date); // Set end date to match for better UX
-          setShowStartPicker(false);
-        }}
-        onCancel={() => setShowStartPicker(false)}
-        title="Select Start Date"
-        confirmText="Done"
-        cancelText="Cancel"
-        theme="light"
-        locale="en"
-      />
-
-      <DatePicker
-        modal
-        mode="date"
-        open={showEndPicker}
-        date={endDate}
-        minimumDate={startDate}
-        onConfirm={(date) => {
-          setEndDate(date);
-          setShowEndPicker(false);
-        }}
-        onCancel={() => setShowEndPicker(false)}
-        title="Select End Date"
-        confirmText="Done"
-        cancelText="Cancel"
-        theme="light"
-        locale="en"
-      />
-    </View>
+      {/* Render date pickers based on platform */}
+      {Platform.OS === 'ios' ? (
+        <>
+          {renderIOSDatePicker(
+            showStartPicker,
+            setShowStartPicker,
+            startDate,
+            onStartDateChange,
+            'Select Start Date'
+          )}
+          {renderIOSDatePicker(
+            showEndPicker,
+            setShowEndPicker,
+            endDate,
+            onEndDateChange,
+            'Select End Date'
+          )}
+        </>
+      ) : (
+        <>
+          {showStartPicker && (
+            <DateTimePicker
+              value={startDate}
+              mode="date"
+              display="default"
+              onChange={onStartDateChange}
+              minimumDate={minDate}
+            />
+          )}
+          {showEndPicker && (
+            <DateTimePicker
+              value={endDate}
+              mode="date"
+              display="default"
+              onChange={onEndDateChange}
+              minimumDate={minDate}
+            />
+          )}
+        </>
+      )}
+    </>
   );
 }
 
@@ -203,13 +279,14 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
-    overflow: 'hidden',
   },
   header: {
     padding: 16,
     backgroundColor: '#F8F8F8',
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: '#E5E5EA',
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
   },
   doctorName: {
     fontSize: 18,
@@ -222,7 +299,7 @@ const styles = StyleSheet.create({
     color: '#8E8E93',
   },
   content: {
-    // No additional styling needed
+    // Content container
   },
   dateSection: {
     padding: 16,
@@ -300,5 +377,51 @@ const styles = StyleSheet.create({
   dateBadgeText: {
     fontSize: 14,
     color: '#000',
+  },
+  // Modal and picker styles for iOS
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    paddingBottom: 100,
+  },
+  modalOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+  },
+  pickerContainer: {
+    backgroundColor: 'white',
+    borderRadius: 20,
+    marginHorizontal: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  pickerHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#E5E5EA',
+  },
+  pickerTitle: {
+    fontSize: 17,
+    fontWeight: '600',
+    color: '#000',
+  },
+  pickerDoneButton: {
+    fontSize: 17,
+    color: '#007AFF',
+    fontWeight: '600',
+  },
+  picker: {
+    height: 216,
   },
 });

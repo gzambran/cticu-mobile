@@ -1,20 +1,22 @@
-import SwapRequestModal from '@/components/SwapRequestModal';
+import SwapRequestForm from '@/components/SwapRequestForm';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDoctors } from '@/contexts/DoctorsContext';
 import api from '@/services/api';
+import useNotificationStore from '@/stores/notificationStore';
 import { ShiftChange, ShiftChangeRequest } from '@/types';
 import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    RefreshControl,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -26,13 +28,57 @@ function SwapScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [viewMode, setViewMode] = useState<'mine' | 'admin'>('mine');
-  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showCreateForm, setShowCreateForm] = useState(true); // Show form by default
+
+  // Notification store hooks
+  const markRequestAsSeen = useNotificationStore(state => state.markRequestAsSeen);
+  const markAllRequestsAsSeen = useNotificationStore(state => state.markAllRequestsAsSeen);
+  const fetchAndUpdateBadges = useNotificationStore(state => state.fetchAndUpdateBadges);
 
   const isAdmin = user?.role === 'admin';
 
+  // Load requests on mount
   useEffect(() => {
     loadRequests();
   }, []);
+
+  // Auto-collapse form if user has existing swaps
+  useEffect(() => {
+    const userHasSwaps = requests.some(
+      request => request.requester_username === user?.username ||
+      request.shifts.some(shift => shift.to_doctor === user?.fullName || shift.to_doctor === user?.username)
+    );
+    // Keep form open for new users, collapsed for returning users with swaps
+    setShowCreateForm(!userHasSwaps);
+  }, [requests, user]);
+
+  // Clear badges for regular users when viewing swap screen
+  // Admins never clear badges (they clear when requests are handled)
+  useFocusEffect(
+    useCallback(() => {
+      if (user && !isAdmin) {
+        // Regular users: mark all as seen when viewing the screen
+        const timer = setTimeout(() => {
+          markAllRequestsAsSeen();
+          // Update badge to reflect seen status
+          fetchAndUpdateBadges(user.username, user.role);
+        }, 100);
+        
+        return () => clearTimeout(timer);
+      }
+    }, [user?.username, user?.role, isAdmin])
+  );
+
+  // Refresh data when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      // Refresh data when screen gains focus
+      if (user && !loading && !refreshing) {
+        loadRequests(true);
+        fetchAndUpdateBadges(user.username, user.role);
+      }
+    }, [user?.username, user?.role])
+  );
 
   const loadRequests = async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
@@ -59,10 +105,31 @@ function SwapScreen() {
     try {
       await api.createShiftChangeRequest(shifts, notes);
       Alert.alert('Success', 'Shift swap request submitted');
-      loadRequests();
-      setShowCreateModal(false);
+      await loadRequests();
+      
+      // Refresh badges after creating a request
+      if (user) {
+        fetchAndUpdateBadges(user.username, user.role);
+      }
+      
+      // Don't auto-close the form after submission
+      // Let the useEffect handle it based on whether user now has swaps
     } catch (error) {
-      throw error; // Let the modal handle the error
+      throw error; // Let the form component handle the error
+    }
+  };
+
+  const handleAcknowledge = async (requestId: number) => {
+    try {
+      await api.acknowledgeShiftChangeRequest(requestId);
+      await loadRequests(); // Request will disappear
+      
+      // Refresh badges
+      if (user) {
+        fetchAndUpdateBadges(user.username, user.role);
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to dismiss request');
     }
   };
 
@@ -79,7 +146,12 @@ function SwapScreen() {
             try {
               await api.approveShiftChangeRequest(requestId);
               Alert.alert('Success', 'Shift swap approved');
-              loadRequests();
+              await loadRequests();
+              
+              // Refresh badges to update admin count
+              if (user) {
+                fetchAndUpdateBadges(user.username, user.role);
+              }
             } catch (error) {
               Alert.alert('Error', 'Failed to approve shift swap');
             }
@@ -102,7 +174,12 @@ function SwapScreen() {
             try {
               await api.denyShiftChangeRequest(requestId);
               Alert.alert('Success', 'Shift swap denied');
-              loadRequests();
+              await loadRequests();
+              
+              // Refresh badges to update admin count
+              if (user) {
+                fetchAndUpdateBadges(user.username, user.role);
+              }
             } catch (error) {
               Alert.alert('Error', 'Failed to deny shift swap');
             }
@@ -128,6 +205,7 @@ function SwapScreen() {
   const renderRequest = (request: ShiftChangeRequest) => {
     const isPending = request.status === 'pending';
     const canApprove = isAdmin && isPending && viewMode === 'admin';
+    const canDismiss = !isPending && viewMode === 'mine'; // Can dismiss completed requests in My Swaps view
 
     return (
       <View key={request.id} style={styles.requestCard}>
@@ -189,6 +267,15 @@ function SwapScreen() {
             </TouchableOpacity>
           </View>
         )}
+
+        {canDismiss && (
+          <TouchableOpacity
+            style={styles.dismissButton}
+            onPress={() => handleAcknowledge(request.id)}
+          >
+            <Text style={styles.dismissButtonText}>Dismiss</Text>
+          </TouchableOpacity>
+        )}
       </View>
     );
   };
@@ -237,6 +324,7 @@ function SwapScreen() {
 
       <ScrollView
         style={styles.scrollView}
+        contentInsetAdjustmentBehavior="automatic"
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -245,36 +333,57 @@ function SwapScreen() {
           />
         }
       >
+        {/* Inline form - only show in 'mine' view */}
         {viewMode === 'mine' && (
-          <TouchableOpacity
-            style={styles.createButton}
-            onPress={() => setShowCreateModal(true)}
-          >
-            <Ionicons name="add-circle" size={24} color="white" />
-            <Text style={styles.createButtonText}>New Swap Request</Text>
-          </TouchableOpacity>
+          <View style={styles.inlineFormContainer}>
+            <TouchableOpacity 
+              style={styles.formToggle}
+              onPress={() => setShowCreateForm(!showCreateForm)}
+            >
+              <Text style={styles.formToggleText}>New Swap Request</Text>
+              <Ionicons 
+                name={showCreateForm ? "chevron-up" : "chevron-down"} 
+                size={24} 
+                color="#007AFF" 
+              />
+            </TouchableOpacity>
+            
+            {showCreateForm && (
+              <SwapRequestForm
+                onSubmit={handleCreateSwap}
+                doctors={doctors}
+                currentUser={user}
+              />
+            )}
+          </View>
         )}
 
-        {filteredRequests.length === 0 ? (
+        {/* Existing requests */}
+        {filteredRequests.length === 0 && viewMode === 'admin' && (
           <View style={styles.emptyState}>
             <Text style={styles.emptyStateText}>
-              {viewMode === 'admin' 
-                ? 'No pending swap requests to review' 
-                : 'No shift swap requests'}
+              No pending swap requests to review
             </Text>
           </View>
-        ) : (
-          filteredRequests.map(renderRequest)
+        )}
+
+        {filteredRequests.length === 0 && viewMode === 'mine' && (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyStateText}>
+              No swap requests yet. Create one above!
+            </Text>
+          </View>
+        )}
+        
+        {filteredRequests.length > 0 && (
+          <View style={styles.requestsSection}>
+            <Text style={styles.sectionTitle}>
+              {viewMode === 'mine' ? 'Your Requests' : 'Pending Requests'}
+            </Text>
+            {filteredRequests.map(renderRequest)}
+          </View>
         )}
       </ScrollView>
-
-      <SwapRequestModal
-        visible={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
-        onSubmit={handleCreateSwap}
-        doctors={doctors}
-        currentUser={user}
-      />
     </View>
   );
 }
@@ -293,6 +402,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: 'white',
     paddingHorizontal: 20,
     paddingVertical: 16,
@@ -332,23 +444,41 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
   },
-  createButton: {
-    flexDirection: 'row',
-    backgroundColor: '#007AFF',
+  inlineFormContainer: {
+    backgroundColor: 'white',
     marginHorizontal: 16,
     marginTop: 16,
-    marginBottom: 8,
-    paddingVertical: 14,
-    paddingHorizontal: 20,
     borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    overflow: 'hidden',
   },
-  createButtonText: {
-    color: 'white',
+  formToggle: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#E5E5EA',
+  },
+  formToggleText: {
     fontSize: 17,
     fontWeight: '600',
+    color: '#000',
+  },
+  requestsSection: {
+    marginTop: 24,
+  },
+  sectionTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#8E8E93',
+    textTransform: 'uppercase',
+    marginHorizontal: 16,
+    marginBottom: 8,
   },
   requestCard: {
     backgroundColor: 'white',
@@ -442,6 +572,19 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     fontWeight: '600',
+  },
+  dismissButton: {
+    backgroundColor: '#F2F2F7',
+    marginHorizontal: 16,
+    marginBottom: 16,
+    paddingVertical: 10,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  dismissButtonText: {
+    color: '#007AFF',
+    fontSize: 16,
+    fontWeight: '500',
   },
   emptyState: {
     paddingVertical: 40,

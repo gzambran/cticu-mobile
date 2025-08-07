@@ -1,4 +1,5 @@
 import DoctorPickerModal from '@/components/DoctorPickerModal';
+import PasswordChangeModal from '@/components/PasswordChangeModal';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDoctors } from '@/contexts/DoctorsContext';
 import { useFilter } from '@/contexts/FilterContext';
@@ -21,10 +22,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
-  const { signOut } = useAuth();
+  const { signOut, user } = useAuth();
   const { defaultDoctor, setDefaultDoctor } = useFilter();
   const { doctors } = useDoctors();
   const [firstDayMonday, setFirstDayMonday] = useState(false);
+  const [passwordModalVisible, setPasswordModalVisible] = useState(false);
 
   useEffect(() => {
     loadSettings();
@@ -103,6 +105,39 @@ export default function SettingsScreen() {
 
       <ScrollView style={styles.content}>
         <View style={styles.section}>
+          <Text style={styles.sectionTitle}>ACCOUNT</Text>
+          
+          <View style={styles.settingRow}>
+            <View style={styles.settingInfo}>
+              <Ionicons name="person-circle-outline" size={20} color="#007AFF" />
+              <Text style={styles.settingText}>Username</Text>
+            </View>
+            <Text style={styles.settingValue}>{user?.username || 'Unknown'}</Text>
+          </View>
+          
+          <TouchableOpacity 
+            style={styles.settingRow} 
+            onPress={() => setPasswordModalVisible(true)}
+          >
+            <View style={styles.settingInfo}>
+              <Ionicons name="key-outline" size={20} color="#007AFF" />
+              <Text style={styles.settingText}>Change Password</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color="#C7C7CC" />
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.settingRow} 
+            onPress={handleSignOut}
+          >
+            <View style={styles.settingInfo}>
+              <Ionicons name="log-out-outline" size={20} color="#FF3B30" />
+              <Text style={[styles.settingText, { color: '#FF3B30' }]}>Sign Out</Text>
+            </View>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.section}>
           <Text style={styles.sectionTitle}>PREFERENCES</Text>
           
           <View style={styles.settingRow}>
@@ -121,7 +156,7 @@ export default function SettingsScreen() {
           <View style={styles.settingRow}>
             <View style={styles.settingInfo}>
               <Ionicons name="person-outline" size={20} color="#007AFF" />
-              <Text style={styles.settingText}>Default Doctor Filter</Text>
+              <Text style={styles.settingText}>Default Calendar View</Text>
             </View>
             <DoctorPickerModal
               selectedDoctor={defaultDoctor}
@@ -163,19 +198,15 @@ export default function SettingsScreen() {
           
           <View style={styles.settingRow}>
             <Text style={styles.settingText}>Version</Text>
-            <Text style={styles.settingValue}>1.0.1</Text>
+            <Text style={styles.settingValue}>1.1.0</Text>
           </View>
         </View>
-
-        <View style={styles.section}>
-          <TouchableOpacity 
-            style={[styles.settingRow, styles.signOutButton]} 
-            onPress={handleSignOut}
-          >
-            <Text style={styles.signOutText}>Sign Out</Text>
-          </TouchableOpacity>
-        </View>
       </ScrollView>
+
+      <PasswordChangeModal 
+        visible={passwordModalVisible}
+        onClose={() => setPasswordModalVisible(false)}
+      />
     </View>
   );
 }
@@ -249,13 +280,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: 0,
     paddingVertical: 0,
     gap: 8,
-  },
-  signOutButton: {
-    justifyContent: 'center',
-  },
-  signOutText: {
-    fontSize: 17,
-    color: '#FF3B30',
-    textAlign: 'center',
   },
 });

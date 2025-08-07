@@ -1,80 +1,49 @@
-# ICU Scheduler Mobile App
+# CTICU Mobile App - Context for Claude
 
-A React Native/Expo mobile app for viewing ICU doctor schedules.
+## Key Architecture Decisions
 
-## Features
+### Badge Behavior (Critical Context)
+**Admins and regular users have intentionally different badge experiences:**
 
-- 🔐 Secure login with session management
-- 📅 Monthly calendar view with Apple Calendar-style UI
-- 🔴 Color-coded shifts (5W, 5C, Night, Swing)
-- 👨‍⚕️ Filter by doctor
-- ⭐ Holiday indicators
-- 📱 Offline support with cached data
-- 🔄 Pull-to-refresh
-- 🔒 Session stored securely with Expo SecureStore
+- **Admin badges** = Count of pending requests that need action. Never clears until requests are approved/denied. This is a "work queue" indicator.
+- **User badges** = Count of unseen updates. Clears when they view the swap screen. This is a "notification" indicator.
 
-## Setup
+This was a deliberate design choice because admins are decision-makers while users are notification consumers.
 
-1. Install dependencies:
-```bash
-npm install
-```
+### No Polling
+Removed 60-second interval refresh that was causing badge flickering and battery drain. Updates now happen only on:
+- App foreground
+- Push notification received  
+- Manual action (create/approve/deny/pull-to-refresh)
 
-2. Start the development server:
-```bash
-npm start
-```
-
-3. Run on iOS/Android:
-- Press `i` for iOS simulator
-- Press `a` for Android emulator
-- Or scan QR code with Expo Go app
-
-## Architecture
-
-- **Framework**: Expo SDK 53
-- **Language**: TypeScript
-- **Navigation**: Expo Router (file-based)
-- **State Management**: React Query + AsyncStorage
-- **Styling**: React Native StyleSheet (iOS-native patterns)
-- **API**: REST API at https://cticu.zambrano.nyc
-- **Authentication**: Session-based with secure storage
+### Push Notifications
+- Physical device + development build required (not Expo Go)
+- Token registration happens on login via AuthContext
+- Notifications trigger navigation to relevant screen
 
 ## Project Structure
 
 ```
 cticu-mobile/
-├── app/                    # Expo Router pages
-│   ├── (tabs)/            # Tab navigation
-│   │   ├── index.tsx      # Schedule screen
-│   │   └── explore.tsx    # Settings screen
-│   ├── login.tsx          # Login screen
-│   └── _layout.tsx        # Root layout with auth
-├── components/            # React components
-│   ├── CalendarView.tsx   # Main calendar grid
-│   ├── DayCell.tsx        # Individual day cell
-│   ├── DayDetailModal.tsx # Day detail view
-│   ├── DoctorFilter.tsx   # Doctor filter dropdown
-│   └── OfflineIndicator.tsx
-├── services/              # API services
-│   ├── api.ts            # API client with caching
-│   └── auth.ts           # Authentication service
-├── types/                 # TypeScript types
-│   └── index.ts
-└── utils/                 # Utility functions
-    └── date.ts           # Date helpers
+├── app/(tabs)/          # Tab screens with badge display
+│   ├── swap.tsx         # Shift swaps - main badge logic here
+│   └── _layout.tsx      # Tab bar with badge rendering
+├── stores/
+│   └── notificationStore.ts  # Zustand store for badge state
+├── services/
+│   └── pushNotifications.ts  # Push handler, token management
+└── contexts/
+    └── AuthContext.tsx  # Handles push token registration on login
 ```
 
-## Shift Types
+## State Management
+- **Schedule data**: React Query + AsyncStorage caching
+- **Badge/notification state**: Zustand (notificationStore)
+- **Auth/user context**: React Context
+- **Filters**: React Context
 
-- **5W** (Day Week) - Light Pink
-- **5C** (Day Call) - Plum  
-- **Night** - Sky Blue
-- **Swing** (Mon-Thu only) - Pale Green
 
-## Offline Support
-
-The app caches all viewed schedule data using AsyncStorage. When offline:
-- Previously viewed months are available
-- An offline indicator appears
-- Uncached months show "Internet connection required"
+## Backend Integration
+- Shift change requests API filters by role (admins see all pending, users see their own)
+- Push notifications sent via expo-server-sdk when requests are created/approved/denied
+- Push tokens stored in database per user/device

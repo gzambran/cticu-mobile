@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import config from '../config';
-import { Holidays, Schedule, ShiftChange, ShiftChangeRequest, Unavailability } from '../types';
+import { Holidays, Schedule, ShiftChange, ShiftChangeRequest, ShiftType, Unavailability } from '../types';
 import authService, { AuthError, NetworkError } from './auth';
 
 const API_BASE_URL = config.API_BASE_URL;
@@ -114,17 +114,32 @@ class ApiService {
     );
   }
 
-  async getSchedules(startDate: string, endDate: string, forceRefresh = false): Promise<Schedule> {
+  async getSchedules(
+    startDate: string, 
+    endDate: string, 
+    forceRefresh = false,
+    shiftTypes?: ShiftType[]
+  ): Promise<Schedule> {
     // Validate date format
     const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
     if (!dateRegex.test(startDate) || !dateRegex.test(endDate)) {
       throw new ApiError('Invalid date format. Expected YYYY-MM-DD');
     }
 
-    const cacheKey = `schedules_${startDate}_${endDate}`;
+    // Build URL with optional shift types filter
+    let url = `/api/schedules?startDate=${startDate}&endDate=${endDate}`;
+    if (shiftTypes && shiftTypes.length > 0) {
+      url += `&shiftTypes=${shiftTypes.join(',')}`;
+    }
+
+    // Include shift types in cache key if filtering
+    const cacheKey = shiftTypes && shiftTypes.length > 0
+      ? `schedules_${startDate}_${endDate}_${shiftTypes.join(',')}`
+      : `schedules_${startDate}_${endDate}`;
+      
     return this.fetchWithCache<Schedule>(
       cacheKey,
-      `/api/schedules?startDate=${startDate}&endDate=${endDate}`,
+      url,
       forceRefresh
     );
   }
@@ -240,6 +255,30 @@ class ApiService {
         throw error;
       }
       throw new ApiError('Failed to deny shift change request');
+    }
+  }
+
+  async acknowledgeShiftChangeRequest(requestId: number): Promise<void> {
+    try {
+      const response = await authService.authenticatedFetch(
+        `/api/shift-change-requests/${requestId}/acknowledge`,
+        {
+          method: 'POST',
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new ApiError(
+          errorData?.error || `Request failed with status: ${response.status}`,
+          response.status
+        );
+      }
+    } catch (error) {
+      if (error instanceof AuthError || error instanceof NetworkError || error instanceof ApiError) {
+        throw error;
+      }
+      throw new ApiError('Failed to acknowledge shift change request');
     }
   }
 

@@ -90,6 +90,72 @@ class AuthService {
     }
   }
 
+  async changePassword(currentPassword: string, newPassword: string): Promise<boolean> {
+    try {
+      const response = await this.authenticatedFetch('/api/user/change-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify({ currentPassword, newPassword }),
+      });
+
+      const responseText = await response.text();
+      
+      if (response.ok) {
+        let data;
+        try {
+          data = JSON.parse(responseText);
+        } catch {
+          throw new AuthError('Invalid response from server');
+        }
+        
+        return data.success === true;
+      }
+
+      // Parse error response
+      let errorData;
+      try {
+        errorData = JSON.parse(responseText);
+      } catch {
+        throw new AuthError('Failed to change password');
+      }
+
+      // Handle specific error messages
+      if (response.status === 401 && errorData.error === 'Current password is incorrect') {
+        throw new AuthError('Current password is incorrect');
+      }
+      
+      if (response.status === 400) {
+        throw new AuthError(errorData.error || 'Invalid password');
+      }
+
+      throw new AuthError(errorData.error || `Failed with status: ${response.status}`);
+    } catch (error) {
+      // Re-throw AuthError as is
+      if (error instanceof AuthError) {
+        throw error;
+      }
+      
+      // Handle network errors
+      if (error instanceof TypeError && error.message === 'Network request failed') {
+        throw new NetworkError('Cannot connect to server. Please check your internet connection.');
+      }
+      
+      // Handle other errors
+      if (error instanceof Error) {
+        if (__DEV__) {
+          console.error('Password change error:', error.message);
+        }
+        throw new AuthError(`Failed to change password: ${error.message}`);
+      }
+      
+      // Unknown error
+      throw new AuthError('An unexpected error occurred');
+    }
+  }
+
   async authenticatedFetch(url: string, options: RequestInit = {}): Promise<Response> {
     // Get stored token if not in memory
     if (!this.authToken) {

@@ -104,102 +104,111 @@ export default function SettingsScreen() {
       </View>
 
       <ScrollView style={styles.content}>
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>ACCOUNT</Text>
+        {/* ACCOUNT Card */}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>ACCOUNT</Text>
           
-          <View style={styles.settingRow}>
-            <View style={styles.settingInfo}>
-              <Ionicons name="person-circle-outline" size={20} color="#007AFF" />
-              <Text style={styles.settingText}>Username</Text>
+          <View style={styles.cardContent}>
+            <View style={styles.settingRow}>
+              <View style={styles.settingInfo}>
+                <Ionicons name="person-circle-outline" size={20} color="#007AFF" />
+                <Text style={styles.settingText}>Username</Text>
+              </View>
+              <Text style={styles.settingValue}>{user?.username || 'Unknown'}</Text>
             </View>
-            <Text style={styles.settingValue}>{user?.username || 'Unknown'}</Text>
-          </View>
-          
-          <TouchableOpacity 
-            style={styles.settingRow} 
-            onPress={() => setPasswordModalVisible(true)}
-          >
-            <View style={styles.settingInfo}>
-              <Ionicons name="key-outline" size={20} color="#007AFF" />
-              <Text style={styles.settingText}>Change Password</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color="#C7C7CC" />
-          </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={styles.settingRow} 
-            onPress={handleSignOut}
-          >
-            <View style={styles.settingInfo}>
-              <Ionicons name="log-out-outline" size={20} color="#FF3B30" />
-              <Text style={[styles.settingText, { color: '#FF3B30' }]}>Sign Out</Text>
-            </View>
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>PREFERENCES</Text>
-          
-          <View style={styles.settingRow}>
-            <View style={styles.settingInfo}>
-              <Ionicons name="calendar-outline" size={20} color="#007AFF" />
-              <Text style={styles.settingText}>Start Week on Monday</Text>
-            </View>
-            <Switch
-              value={firstDayMonday}
-              onValueChange={toggleFirstDay}
-              trackColor={{ false: '#767577', true: '#007AFF' }}
-              thumbColor="#f4f3f4"
-            />
-          </View>
-          
-          <View style={styles.settingRow}>
-            <View style={styles.settingInfo}>
-              <Ionicons name="person-outline" size={20} color="#007AFF" />
-              <Text style={styles.settingText}>Default Calendar View</Text>
-            </View>
-            <DoctorPickerModal
-              selectedDoctor={defaultDoctor}
-              onSelectDoctor={(doctor) => handleSelectDefaultDoctor(doctor || 'All')}
-              doctors={doctors}
-              includeAllOption={true}
-              triggerStyle={styles.doctorPickerTrigger}
-              triggerTextStyle={styles.settingValue}
-            />
+            
+            <View style={styles.divider} />
+            
+            <TouchableOpacity 
+              style={styles.settingRow} 
+              onPress={() => setPasswordModalVisible(true)}
+            >
+              <View style={styles.settingInfo}>
+                <Ionicons name="key-outline" size={20} color="#007AFF" />
+                <Text style={styles.settingText}>Change Password</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color="#C7C7CC" />
+            </TouchableOpacity>
+            
+            <View style={styles.divider} />
+            
+            <TouchableOpacity 
+              style={styles.settingRow} 
+              onPress={handleSignOut}
+            >
+              <View style={styles.settingInfo}>
+                <Ionicons name="log-out-outline" size={20} color="#FF3B30" />
+                <Text style={[styles.settingText, { color: '#FF3B30' }]}>Sign Out</Text>
+              </View>
+            </TouchableOpacity>
           </View>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>DATA</Text>
+        {/* PREFERENCES Card */}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>PREFERENCES</Text>
           
-          <TouchableOpacity style={styles.settingRow} onPress={handleClearCache}>
-            <View style={styles.settingInfo}>
-              <Ionicons name="trash-outline" size={20} color="#FF3B30" />
-              <Text style={[styles.settingText, { color: '#FF3B30' }]}>Clear Cache</Text>
+          <View style={styles.cardContent}>
+            <View style={styles.settingRow}>
+              <View style={styles.settingInfo}>
+                <Ionicons name="calendar-outline" size={20} color="#007AFF" />
+                <Text style={styles.settingText}>Start Week on Monday</Text>
+              </View>
+              <Switch
+                value={firstDayMonday}
+                onValueChange={toggleFirstDay}
+                trackColor={{ false: '#767577', true: '#007AFF' }}
+                thumbColor="#f4f3f4"
+              />
             </View>
-            <Ionicons name="chevron-forward" size={20} color="#C7C7CC" />
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>WEB</Text>
-          
-          <TouchableOpacity style={styles.settingRow} onPress={handleOpenWeb}>
-            <View style={styles.settingInfo}>
-              <Ionicons name="globe-outline" size={20} color="#007AFF" />
-              <Text style={styles.settingText}>View on Web</Text>
+            
+            <View style={styles.divider} />
+            
+            <View style={styles.settingRow}>
+              <View style={styles.settingInfo}>
+                <Ionicons name="person-outline" size={20} color="#007AFF" />
+                <Text style={styles.settingText}>Default Calendar View</Text>
+              </View>
+              <DoctorPickerModal
+                selectedDoctor={defaultDoctor}
+                onSelectDoctor={(doctor) => handleSelectDefaultDoctor(doctor || 'All')}
+                doctors={doctors}
+                includeAllOption={true}
+                triggerStyle={styles.doctorPickerTrigger}
+                triggerTextStyle={styles.settingValue}
+              />
             </View>
-            <Ionicons name="open-outline" size={18} color="#C7C7CC" />
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>ABOUT</Text>
-          
-          <View style={styles.settingRow}>
-            <Text style={styles.settingText}>Version</Text>
-            <Text style={styles.settingValue}>1.1.0</Text>
           </View>
+        </View>
+
+        {/* MORE Card */}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>MORE</Text>
+          
+          <View style={styles.cardContent}>
+            <TouchableOpacity style={styles.settingRow} onPress={handleClearCache}>
+              <View style={styles.settingInfo}>
+                <Ionicons name="trash-outline" size={20} color="#007AFF" />
+                <Text style={styles.settingText}>Clear Cache</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color="#C7C7CC" />
+            </TouchableOpacity>
+            
+            <View style={styles.divider} />
+            
+            <TouchableOpacity style={styles.settingRow} onPress={handleOpenWeb}>
+              <View style={styles.settingInfo}>
+                <Ionicons name="globe-outline" size={20} color="#007AFF" />
+                <Text style={styles.settingText}>View on Web</Text>
+              </View>
+              <Ionicons name="open-outline" size={18} color="#C7C7CC" />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Version at the bottom - Apple style */}
+        <View style={styles.versionContainer}>
+          <Text style={styles.versionText}>Version 1.1.0</Text>
         </View>
       </ScrollView>
 
@@ -224,8 +233,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'white',
-    paddingHorizontal: 16,
-    height: 56,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: '#C6C6C8',
   },
@@ -237,32 +246,41 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
   },
-  section: {
-    marginTop: 35,
+  card: {
+    backgroundColor: 'white',
+    marginHorizontal: 16,
+    marginTop: 16,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  sectionTitle: {
+  cardTitle: {
     fontSize: 13,
     fontWeight: '600',
     color: '#8E8E93',
-    marginBottom: 8,
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 8,
+  },
+  cardContent: {
+    paddingBottom: 8,
   },
   settingRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: 'white',
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingVertical: 12,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: '#C6C6C8',
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#C6C6C8',
+    minHeight: 44,
   },
   settingInfo: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
+    flex: 1,
   },
   settingText: {
     fontSize: 17,
@@ -272,6 +290,12 @@ const styles = StyleSheet.create({
     fontSize: 17,
     color: '#8E8E93',
     fontWeight: 'normal',
+    flex: 0,
+  },
+  divider: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: '#E5E5EA',
+    marginLeft: 48,
   },
   doctorPickerTrigger: {
     flexDirection: 'row',
@@ -280,5 +304,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 0,
     paddingVertical: 0,
     gap: 8,
+    maxWidth: 120,
+  },
+  versionContainer: {
+    marginTop: 40,
+    marginBottom: 40,
+    alignItems: 'center',
+  },
+  versionText: {
+    fontSize: 13,
+    color: '#8E8E93',
   },
 });

@@ -44,10 +44,8 @@ export default function SwapRequestForm({
     loadCurrentAndNextQuarterSchedules();
   }, []);
 
-  // Reset form when user navigates away from the screen
   useFocusEffect(
     useCallback(() => {
-      // Cleanup function runs when screen loses focus
       return () => {
         setSwapRows([{ id: 1, selectedShifts: [] }]);
         setNotes('');
@@ -77,7 +75,6 @@ export default function SwapRequestForm({
       const nextQuarterEndMonth = (nextQuarter * 3) + 2;
       const endDate = new Date(nextQuarterYear, nextQuarterEndMonth + 1, 0);
       
-      // Only get 5C, 5W, and Night shifts for swaps (exclude Swing)
       const schedulesData = await api.getSchedules(
         formatDate(startDate),
         formatDate(endDate),
@@ -187,7 +184,6 @@ export default function SwapRequestForm({
     setLoading(true);
     try {
       await onSubmit(shifts, notes || undefined);
-      // Reset form after successful submission
       setSwapRows([{ id: 1, selectedShifts: [] }]);
       setNotes('');
     } catch (error) {
@@ -213,8 +209,8 @@ export default function SwapRequestForm({
               </TouchableOpacity>
             )}
 
-            <View style={styles.doctorRow}>
-              <Text style={styles.inlineLabel}>From:</Text>
+            <View style={styles.doctorField}>
+              <Text style={styles.fieldLabel}>FROM</Text>
               <DoctorPickerModal
                 selectedDoctor={row.fromDoctor}
                 onSelectDoctor={(doctor) => updateSwapRow(row.id, { 
@@ -223,14 +219,14 @@ export default function SwapRequestForm({
                 })}
                 doctors={doctors}
                 includeAllOption={false}
-                triggerStyle={styles.compactPicker}
-                triggerTextStyle={styles.compactPickerText}
+                triggerStyle={styles.doctorPicker}
+                triggerTextStyle={styles.doctorPickerText}
               />
             </View>
 
             {row.fromDoctor && availableShifts.length > 0 && (
               <View style={styles.field}>
-                <Text style={styles.fieldLabel}>Select Shifts:</Text>
+                <Text style={styles.fieldLabel}>SELECT SHIFTS</Text>
                 <ScrollView 
                   style={styles.shiftsContainer}
                   horizontal={false}
@@ -272,15 +268,15 @@ export default function SwapRequestForm({
               </View>
             )}
 
-            <View style={styles.doctorRow}>
-              <Text style={styles.inlineLabel}>To:</Text>
+            <View style={styles.doctorField}>
+              <Text style={styles.fieldLabel}>TO</Text>
               <DoctorPickerModal
                 selectedDoctor={row.toDoctor}
                 onSelectDoctor={(doctor) => updateSwapRow(row.id, { toDoctor: doctor })}
                 doctors={doctors.filter(d => d !== row.fromDoctor)}
                 includeAllOption={false}
-                triggerStyle={styles.compactPicker}
-                triggerTextStyle={styles.compactPickerText}
+                triggerStyle={styles.doctorPicker}
+                triggerTextStyle={styles.doctorPickerText}
               />
             </View>
 
@@ -295,7 +291,7 @@ export default function SwapRequestForm({
       </TouchableOpacity>
 
       <View style={styles.notesField}>
-        <Text style={styles.fieldLabel}>Notes (optional):</Text>
+        <Text style={styles.fieldLabel}>NOTES (OPTIONAL)</Text>
         <TextInput
           style={styles.notesInput}
           value={notes}
@@ -338,45 +334,30 @@ const styles = StyleSheet.create({
     top: 0,
     right: 0,
     zIndex: 1,
-    padding: 4, // Add padding for easier tapping
+    padding: 4,
   },
-  doctorRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-    gap: 12,
-    paddingRight: 35, // Add padding to prevent overlap with trash button
-  },
-  inlineLabel: {
-    fontSize: 15,
-    fontWeight: '500',
-    color: '#000',
-    minWidth: 45,
-  },
-  compactPicker: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F2F2F7',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
-    flex: 1,
-    maxWidth: '85%', // Limit width to prevent overlap
-  },
-  compactPickerText: {
-    fontSize: 15,
-    fontWeight: '500',
-    color: '#000',
-    marginRight: 4,
+  doctorField: {
+    marginBottom: 20,
   },
   field: {
-    marginBottom: 12,
+    marginBottom: 20,
   },
   fieldLabel: {
-    fontSize: 14,
-    fontWeight: '500',
+    fontSize: 13,
+    fontWeight: '600',
     color: '#8E8E93',
     marginBottom: 8,
+    letterSpacing: 0.5,
+  },
+  doctorPicker: {
+    paddingBottom: 8,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#E5E5EA',
+  },
+  doctorPickerText: {
+    fontSize: 17,
+    fontWeight: '400',
+    color: '#000',
   },
   shiftsContainer: {
     maxHeight: 180,
@@ -429,14 +410,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 8,
     paddingVertical: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#007AFF',
-    borderStyle: 'dashed',
     marginBottom: 16,
   },
   addButtonText: {
     fontSize: 16,
+    fontWeight: '500',
     color: '#007AFF',
   },
   notesField: {

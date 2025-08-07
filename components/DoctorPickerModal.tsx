@@ -1,13 +1,13 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useRef, useState } from 'react';
 import {
-    Animated,
-    FlatList,
-    Modal,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Animated,
+  FlatList,
+  Modal,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -112,19 +112,46 @@ export default function DoctorPickerModal({
     return optionValue === selectedDoctor;
   };
 
+  // Determine if we should show placeholder styling
+  const isPlaceholder = !selectedDoctor && (includeNoneOption || (!includeAllOption && !selectedDoctor));
+
+  // Determine the chevron color - simplified logic
+  const getChevronColor = () => {
+    // Special case: Schedule header passes blue color for filter
+    if (triggerTextStyle?.color === '#007AFF') {
+      return '#007AFF';
+    }
+    
+    // Default: iOS standard gray chevron for all other contexts
+    // This matches iOS Settings, forms, and standard UI patterns
+    return '#C7C7CC';
+  };
+
   return (
     <>
       <TouchableOpacity
-        style={[styles.triggerButton, triggerStyle]}
+        style={[styles.defaultTrigger, triggerStyle]}
         onPress={() => setModalVisible(true)}
       >
-        {includeAllOption && (
+        {/* Only show filter icon if specifically requested and using default styles */}
+        {includeAllOption && !triggerStyle && (
           <Ionicons name="filter" size={18} color="#007AFF" />
         )}
-        <Text style={[styles.triggerText, triggerTextStyle, !selectedDoctor && includeNoneOption && styles.placeholderText]}>
+        
+        <Text style={[
+          styles.defaultTriggerText,
+          triggerTextStyle,
+          isPlaceholder && styles.placeholderText
+        ]}>
           {getDisplayText()}
         </Text>
-        <Ionicons name="chevron-down" size={14} color={includeAllOption ? "#007AFF" : "#8E8E93"} />
+        
+        {/* Chevron: gray by default, blue only for header filters */}
+        <Ionicons 
+          name={triggerStyle ? "chevron-forward" : "chevron-down"} 
+          size={triggerStyle ? 20 : 14} 
+          color={getChevronColor()} 
+        />
       </TouchableOpacity>
 
       <Modal
@@ -188,26 +215,26 @@ export default function DoctorPickerModal({
 }
 
 const styles = StyleSheet.create({
-  // Default trigger button styles (can be overridden via props)
-  triggerButton: {
+  // Minimal default styles - only structure, no visual design
+  defaultTrigger: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    backgroundColor: '#E5E5EA',
-    borderRadius: 16,
-    gap: 4,
+    justifyContent: 'space-between',
+    // NO background color
+    // NO border radius
+    // NO padding (let parent decide)
   },
-  triggerText: {
-    fontSize: 15,
-    color: '#007AFF',
-    fontWeight: '500',
+  defaultTriggerText: {
+    fontSize: 17,
+    color: '#000',
+    flex: 1,
+    // NO font weight (let parent decide)
   },
   placeholderText: {
     color: '#C7C7CC',
   },
   
-  // Modal styles
+  // Modal styles (these are fine as they're internal to the component)
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',

@@ -3,11 +3,9 @@ import useNotificationStore from '@/stores/notificationStore';
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 import React, { useEffect } from 'react';
-import { AppState, useColorScheme } from 'react-native';
+import { AppState } from 'react-native';
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
-  const tintColor = colorScheme === 'dark' ? '#fff' : '#007AFF';
   const { user } = useAuth();
   
   // Get badge counts from the store
@@ -38,12 +36,15 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: tintColor,
-        tabBarInactiveTintColor: colorScheme === 'dark' ? '#666' : '#999',
+        tabBarActiveTintColor: '#007AFF',  // iOS blue for active items
+        tabBarInactiveTintColor: '#8E8E93', // iOS system gray for inactive
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: colorScheme === 'dark' ? '#000' : '#fff',
-          borderTopColor: colorScheme === 'dark' ? '#333' : '#e5e5e5',
+          backgroundColor: '#FFFFFF',        // Clean white background
+          borderTopColor: '#E5E5EA',        // Light gray border (iOS system separator color)
+          borderTopWidth: 0.5,              // Hairline border
+          elevation: 0,                      // Remove Android shadow
+          shadowOpacity: 0,                  // Remove iOS shadow for cleaner look
         },
       }}>
       <Tabs.Screen

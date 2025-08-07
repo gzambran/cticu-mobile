@@ -30,11 +30,9 @@ export default function SwingShiftCard({
   const [unitCensus, setUnitCensus] = useState(details.unitCensus || '');
   const [cases, setCases] = useState(details.cases || '');
   
-  // Use ReturnType<typeof setTimeout> for React Native compatibility
   const censusDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const casesDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Update local state when props change (e.g., after pull-to-refresh)
   useEffect(() => {
     setUnitCensus(details.unitCensus || '');
     setCases(details.cases || '');
@@ -47,12 +45,10 @@ export default function SwingShiftCard({
   const handleCensusChange = (text: string) => {
     setUnitCensus(text);
     
-    // Clear existing timeout
     if (censusDebounceRef.current) {
       clearTimeout(censusDebounceRef.current);
     }
     
-    // Set new timeout
     censusDebounceRef.current = setTimeout(() => {
       onUpdateDetails(text, cases);
     }, 500);
@@ -61,12 +57,10 @@ export default function SwingShiftCard({
   const handleCasesChange = (text: string) => {
     setCases(text);
     
-    // Clear existing timeout
     if (casesDebounceRef.current) {
       clearTimeout(casesDebounceRef.current);
     }
     
-    // Set new timeout
     casesDebounceRef.current = setTimeout(() => {
       onUpdateDetails(unitCensus, text);
     }, 500);
@@ -79,21 +73,21 @@ export default function SwingShiftCard({
       </View>
       
       <View style={styles.fieldsContainer}>
-        <View style={styles.doctorField}>
-          <Text style={styles.fieldLabel}>Third Attending</Text>
+        <View style={styles.field}>
+          <Text style={styles.fieldLabel}>THIRD ATTENDING</Text>
           <DoctorPickerModal
             selectedDoctor={currentDoctor}
             onSelectDoctor={(doctor) => onUpdateDoctor(doctor || '')}
             doctors={doctors}
             includeNoneOption={true}
             placeholder="Select doctor"
-            triggerStyle={styles.doctorSelector}
-            triggerTextStyle={styles.doctorText}
+            triggerStyle={styles.doctorPicker}
+            triggerTextStyle={styles.doctorPickerText}
           />
         </View>
 
-        <View style={styles.inputField}>
-          <Text style={styles.fieldLabel}>Unit Census at 7a</Text>
+        <View style={styles.field}>
+          <Text style={styles.fieldLabel}>UNIT CENSUS AT 7A</Text>
           <TextInput
             style={styles.textInput}
             value={unitCensus}
@@ -103,8 +97,8 @@ export default function SwingShiftCard({
           />
         </View>
 
-        <View style={styles.inputField}>
-          <Text style={styles.fieldLabel}>Cases</Text>
+        <View style={styles.field}>
+          <Text style={styles.fieldLabel}>CASES</Text>
           <TextInput
             style={styles.textInput}
             value={cases}
@@ -125,10 +119,10 @@ const styles = StyleSheet.create({
     marginVertical: 6,
     borderRadius: 12,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   dateSection: {
     paddingHorizontal: 16,
@@ -143,39 +137,32 @@ const styles = StyleSheet.create({
   fieldsContainer: {
     paddingHorizontal: 16,
     paddingBottom: 16,
-    gap: 12,
+    gap: 16,
   },
-  doctorField: {
-    gap: 4,
-  },
-  inputField: {
-    gap: 4,
+  field: {
+    gap: 8,
   },
   fieldLabel: {
     fontSize: 13,
+    fontWeight: '600',
     color: '#8E8E93',
-    fontWeight: '500',
+    letterSpacing: 0.5,
   },
-  doctorSelector: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#F2F2F7',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
+  doctorPicker: {
+    paddingBottom: 8,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#E5E5EA',
   },
-  doctorText: {
-    fontSize: 15,
+  doctorPickerText: {
+    fontSize: 17,
+    fontWeight: '400',
     color: '#000',
-    fontWeight: 'normal',
   },
   textInput: {
-    backgroundColor: '#F2F2F7',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    fontSize: 15,
+    fontSize: 17,
     color: '#000',
+    paddingBottom: 8,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#E5E5EA',
   },
 });

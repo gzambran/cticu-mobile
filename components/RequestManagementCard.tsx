@@ -113,7 +113,7 @@ export default function RequestManagementCard({
       <Modal
         visible={show}
         transparent={true}
-        animationType="fade" // Changed from 'slide' to 'fade'
+        animationType="fade"
       >
         <View style={styles.modalContainer}>
           <TouchableOpacity 
@@ -126,6 +126,9 @@ export default function RequestManagementCard({
             { paddingBottom: Math.max(insets.bottom, 20) }
           ]}>
             <View style={styles.pickerHeader}>
+              <TouchableOpacity onPress={() => setShow(false)}>
+                <Text style={styles.pickerCancelButton}>Cancel</Text>
+              </TouchableOpacity>
               <Text style={styles.pickerTitle}>{title}</Text>
               <TouchableOpacity onPress={() => setShow(false)}>
                 <Text style={styles.pickerDoneButton}>Done</Text>
@@ -163,7 +166,7 @@ export default function RequestManagementCard({
             
             <View style={styles.dateRow}>
               <View style={styles.dateInput}>
-                <Text style={styles.dateLabel}>Start Date</Text>
+                <Text style={styles.dateLabel}>START DATE</Text>
                 <TouchableOpacity
                   style={styles.dateButton}
                   onPress={() => setShowStartPicker(true)}
@@ -171,11 +174,12 @@ export default function RequestManagementCard({
                   <Text style={styles.dateButtonText}>
                     {startDate.toLocaleDateString()}
                   </Text>
+                  <Ionicons name="chevron-forward" size={20} color="#C7C7CC" />
                 </TouchableOpacity>
               </View>
 
               <View style={styles.dateInput}>
-                <Text style={styles.dateLabel}>End Date</Text>
+                <Text style={styles.dateLabel}>END DATE</Text>
                 <TouchableOpacity
                   style={styles.dateButton}
                   onPress={() => setShowEndPicker(true)}
@@ -183,6 +187,7 @@ export default function RequestManagementCard({
                   <Text style={styles.dateButtonText}>
                     {endDate.toLocaleDateString()}
                   </Text>
+                  <Ionicons name="chevron-forward" size={20} color="#C7C7CC" />
                 </TouchableOpacity>
               </View>
             </View>
@@ -272,7 +277,8 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: 'white',
     marginHorizontal: 16,
-    marginVertical: 8,
+    marginTop: 16,
+    marginBottom: 8,
     borderRadius: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -307,32 +313,36 @@ const styles = StyleSheet.create({
     borderBottomColor: '#E5E5EA',
   },
   sectionTitle: {
-    fontSize: 15,
+    fontSize: 17,
     fontWeight: '600',
     color: '#000',
     marginBottom: 12,
   },
   dateRow: {
     flexDirection: 'row',
-    gap: 12,
-    marginBottom: 12,
+    gap: 16,
+    marginBottom: 16,
   },
   dateInput: {
     flex: 1,
   },
   dateLabel: {
     fontSize: 13,
+    fontWeight: '600',
     color: '#8E8E93',
-    marginBottom: 4,
+    marginBottom: 8,
+    letterSpacing: 0.5,
   },
   dateButton: {
-    backgroundColor: '#F2F2F7',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingBottom: 8,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#E5E5EA',
   },
   dateButtonText: {
-    fontSize: 15,
+    fontSize: 17,
     color: '#000',
   },
   addButton: {
@@ -347,7 +357,7 @@ const styles = StyleSheet.create({
   },
   addButtonText: {
     color: 'white',
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '600',
   },
   currentDates: {
@@ -378,11 +388,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#000',
   },
-  // Modal and picker styles for iOS
+  // Modal and picker styles for iOS - updated to slide from bottom
   modalContainer: {
     flex: 1,
-    justifyContent: 'center',
-    paddingBottom: 100,
+    justifyContent: 'flex-end', // Changed from 'center' to 'flex-end'
   },
   modalOverlay: {
     position: 'absolute',
@@ -394,10 +403,10 @@ const styles = StyleSheet.create({
   },
   pickerContainer: {
     backgroundColor: 'white',
-    borderRadius: 20,
-    marginHorizontal: 20,
+    borderTopLeftRadius: 20,  // Changed from borderRadius to only top corners
+    borderTopRightRadius: 20,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: -2 }, // Changed shadow to come from top
     shadowOpacity: 0.25,
     shadowRadius: 8,
     elevation: 5,
@@ -415,6 +424,10 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: '600',
     color: '#000',
+  },
+  pickerCancelButton: {
+    fontSize: 17,
+    color: '#007AFF',
   },
   pickerDoneButton: {
     fontSize: 17,

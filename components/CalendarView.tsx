@@ -145,6 +145,9 @@ export default function CalendarView({ selectedDoctor, onSelectDoctor, onSetting
         onSelectDoctor={onSelectDoctor}
         doctors={doctors}
         includeAllOption={true}
+        // Modern minimal styling - no gray backgrounds, clean text
+        triggerStyle={styles.doctorFilterButton}
+        triggerTextStyle={styles.doctorFilterText}
       />
       
       <View style={styles.monthNavigation}>
@@ -320,6 +323,22 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: '#C6C6C8',
+  },
+  // Modern minimal styling for the doctor filter
+  doctorFilterButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 8,
+    maxWidth: 100,  // Limit width to prevent overlap
+    // No background color or border radius - clean and minimal
+  },
+  doctorFilterText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#007AFF',  // Blue like other interactive elements
+    flex: 0,  // Override the default flex: 1 from DoctorPickerModal
+    minWidth: 30,  // Fixed minimum width to prevent text shifting
   },
   monthNavigation: {
     flexDirection: 'row',

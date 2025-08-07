@@ -333,28 +333,29 @@ function SwapScreen() {
           />
         }
       >
-        {/* Inline form - only show in 'mine' view */}
         {viewMode === 'mine' && (
           <View style={styles.inlineFormContainer}>
-            <TouchableOpacity 
-              style={styles.formToggle}
-              onPress={() => setShowCreateForm(!showCreateForm)}
-            >
-              <Text style={styles.formToggleText}>New Swap Request</Text>
-              <Ionicons 
-                name={showCreateForm ? "chevron-up" : "chevron-down"} 
-                size={24} 
-                color="#007AFF" 
-              />
-            </TouchableOpacity>
-            
-            {showCreateForm && (
-              <SwapRequestForm
-                onSubmit={handleCreateSwap}
-                doctors={doctors}
-                currentUser={user}
-              />
-            )}
+            <View style={styles.inlineFormInner}>
+              <TouchableOpacity 
+                style={styles.formToggle}
+                onPress={() => setShowCreateForm(!showCreateForm)}
+              >
+                <Text style={styles.formToggleText}>New Swap Request</Text>
+                <Ionicons 
+                  name={showCreateForm ? "chevron-up" : "chevron-down"} 
+                  size={24} 
+                  color="#007AFF" 
+                />
+              </TouchableOpacity>
+              
+              {showCreateForm && (
+                <SwapRequestForm
+                  onSubmit={handleCreateSwap}
+                  doctors={doctors}
+                  currentUser={user}
+                />
+              )}
+            </View>
           </View>
         )}
 
@@ -454,6 +455,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+  },
+  inlineFormInner: {
+    borderRadius: 12,
     overflow: 'hidden',
   },
   formToggle: {
@@ -473,7 +477,7 @@ const styles = StyleSheet.create({
     marginTop: 24,
   },
   sectionTitle: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
     color: '#8E8E93',
     textTransform: 'uppercase',

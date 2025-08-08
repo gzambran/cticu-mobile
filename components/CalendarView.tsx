@@ -24,7 +24,7 @@ import OfflineIndicator from './OfflineIndicator';
 interface CalendarViewProps {
   selectedDoctor?: string;
   onSelectDoctor: (doctor: string | undefined) => void;
-  onSettingsPress?: () => void; // Add this prop
+  onSettingsPress?: () => void;
 }
 
 export default function CalendarView({ selectedDoctor, onSelectDoctor, onSettingsPress }: CalendarViewProps) {
@@ -60,6 +60,15 @@ export default function CalendarView({ selectedDoctor, onSelectDoctor, onSetting
     if (needsReload) {
       loadData();
       setLastLoadedMonth({ year, month });
+    }
+    
+    // Clear selected date if it's not in the current month view
+    if (selectedDate) {
+      const selectedMonth = selectedDate.getMonth();
+      const selectedYear = selectedDate.getFullYear();
+      if (selectedMonth !== month || selectedYear !== year) {
+        setSelectedDate(null);
+      }
     }
   }, [currentDate]);
 
@@ -214,19 +223,15 @@ export default function CalendarView({ selectedDoctor, onSelectDoctor, onSetting
     );
   };
 
-  const renderLegend = () => (
-    <View style={styles.legendContainer}>
-      {Object.entries(SHIFT_COLORS).map(([shift, color]) => (
-        <View key={shift} style={styles.legendItem}>
-          <View style={[styles.legendDot, { backgroundColor: color }]} />
-          <Text style={styles.legendText}>{shift}</Text>
-        </View>
-      ))}
-    </View>
-  );
-
   const renderSelectedDateInfo = () => {
-    if (!selectedDate) return null;
+    if (!selectedDate) {
+      // Show empty state when no date is selected
+      return (
+        <View style={styles.selectedDateContainer}>
+          <Text style={styles.noSelectionText}>Select a date to view details</Text>
+        </View>
+      );
+    }
 
     const dateStr = formatDate(selectedDate);
     const daySchedule = schedules[dateStr];
@@ -391,6 +396,7 @@ const styles = StyleSheet.create({
   selectedDateContainer: {
     backgroundColor: 'white',
     padding: 16,
+    minHeight: 120, // Ensure consistent height even when empty
   },
   selectedDateHeader: {
     marginBottom: 12,
@@ -447,6 +453,12 @@ const styles = StyleSheet.create({
     color: '#8E8E93',
     textAlign: 'center',
     paddingVertical: 20,
+  },
+  noSelectionText: {
+    fontSize: 16,
+    color: '#8E8E93',
+    textAlign: 'center',
+    paddingVertical: 30,
   },
   legendContainer: {
     flexDirection: 'row',

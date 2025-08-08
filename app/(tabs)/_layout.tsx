@@ -16,14 +16,14 @@ export default function TabLayout() {
   // Fetch badges on mount and when app comes to foreground
   useEffect(() => {
     if (user) {
-      // Initial fetch when component mounts
-      fetchAndUpdateBadges(user.username, user.role);
+      // Initial fetch when component mounts - pass doctor code
+      fetchAndUpdateBadges(user.username, user.role, user.doctorCode);
       
       // Handle app state changes - refresh when app comes to foreground
       const subscription = AppState.addEventListener('change', (nextAppState) => {
         if (nextAppState === 'active') {
-          // App has come to the foreground
-          fetchAndUpdateBadges(user.username, user.role);
+          // App has come to the foreground - pass doctor code
+          fetchAndUpdateBadges(user.username, user.role, user.doctorCode);
         }
       });
       
@@ -31,7 +31,7 @@ export default function TabLayout() {
         subscription.remove();
       };
     }
-  }, [user?.username, user?.role]); // Only re-run if user changes
+  }, [user?.username, user?.role, user?.doctorCode]); // Add doctorCode to dependencies
 
   return (
     <Tabs

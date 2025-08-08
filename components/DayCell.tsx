@@ -6,7 +6,7 @@ import {
   View,
 } from 'react-native';
 import { SHIFT_COLORS, ShiftType } from '../types';
-import { formatDate, isToday } from '../utils/date';
+import { isToday } from '../utils/date';
 
 interface DayCellProps {
   date: Date | null;
@@ -36,7 +36,6 @@ export default function DayCell({
 
   const dayNumber = date.getDate();
   const isCurrentDay = isToday(date);
-  const dateStr = formatDate(date);
 
   // Check if there's a Swing shift for this date
   const hasSwingShift = schedule?.Swing ? true : false;

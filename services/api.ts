@@ -1,9 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import config from '../config';
 import { Holidays, Schedule, ShiftChange, ShiftChangeRequest, ShiftType, Unavailability } from '../types';
 import authService, { AuthError, NetworkError } from './auth';
 
-const API_BASE_URL = config.API_BASE_URL;
 const CACHE_DURATION = 3600000 * 4; // 4 hours for multi-month data
 
 // Custom API error

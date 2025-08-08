@@ -185,34 +185,6 @@ export default function SwingShiftsScreen() {
     }
   };
 
-  const getTargetDate = (): Date => {
-    const today = new Date();
-    const dayOfWeek = today.getDay();
-    
-    // If today is a swing shift day (Mon-Thu) and in current month
-    if (dayOfWeek >= 1 && dayOfWeek <= 4 && 
-        today.getMonth() === currentMonth.getMonth() && 
-        today.getFullYear() === currentMonth.getFullYear()) {
-      return today;
-    }
-    
-    // Otherwise, find the next swing shift day
-    const targetDate = new Date(today);
-    
-    // If we're viewing a different month, start from beginning of that month
-    if (today.getMonth() !== currentMonth.getMonth() || 
-        today.getFullYear() !== currentMonth.getFullYear()) {
-      return new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
-    }
-    
-    // Find next Monday-Thursday
-    while (targetDate.getDay() === 0 || targetDate.getDay() === 5 || targetDate.getDay() === 6) {
-      targetDate.setDate(targetDate.getDate() + 1);
-    }
-    
-    return targetDate;
-  };
-
   const scrollToRelevantDate = () => {
     const swingDates = getSwingShiftDatesForMonth(currentMonth);
     const today = new Date();
@@ -240,36 +212,60 @@ export default function SwingShiftsScreen() {
     }
     
     if (targetIndex !== -1 && scrollViewRef.current) {
-      // More accurate card height calculation
-      // Card has: padding top (16) + date section + 3 fields with gaps + padding bottom (16)
-      // Approximately 250-280px per card
       const estimatedCardHeight = 280;
-      const scrollPosition = Math.max(0, targetIndex * estimatedCardHeight - 50); // 50px offset to show some context
+      const scrollPosition = Math.max(0, targetIndex * estimatedCardHeight - 50);
       
-      // Delay to ensure layout is complete
-      setTimeout(() => {
+      // Use requestAnimationFrame for smooth instant positioning
+      requestAnimationFrame(() => {
         scrollViewRef.current?.scrollTo({
           y: scrollPosition,
-          animated: true
+          animated: false  // KEY CHANGE: No animation for instant jump
         });
-      }, 200); // Increased delay for better reliability
+      });
     }
   };
+
+  const jumpToToday = () => {
+    const today = new Date();
+    const isAlreadyCurrentMonth = today.getMonth() === currentMonth.getMonth() && 
+                                  today.getFullYear() === currentMonth.getFullYear();
+    
+    if (!isAlreadyCurrentMonth) {
+      // If changing months, use a subtle fade effect
+      setCurrentMonth(today);
+      // The useEffect will handle the scroll
+    } else {
+      // If already on current month, just scroll to today instantly
+      scrollToRelevantDate();
+    }
+  };
+
+  // Update the useEffect for currentMonth to use instant scrolling:
+  useEffect(() => {
+    // Handle month navigation
+    if (!loading && scrollViewRef.current) {
+      const today = new Date();
+      const isCurrentMonth = today.getMonth() === currentMonth.getMonth() && 
+                            today.getFullYear() === currentMonth.getFullYear();
+      
+      // Use requestAnimationFrame instead of setTimeout for better performance
+      requestAnimationFrame(() => {
+        if (isCurrentMonth) {
+          // If navigating to current month, scroll to today/next swing shift instantly
+          scrollToRelevantDate();
+        } else {
+          // For other months, scroll to top instantly
+          scrollViewRef.current?.scrollTo({ y: 0, animated: false });
+        }
+      });
+    }
+  }, [currentMonth]);
 
   const navigateMonth = (direction: 'prev' | 'next') => {
     const newDate = new Date(currentMonth);
     newDate.setMonth(newDate.getMonth() + (direction === 'prev' ? -1 : 1));
     setCurrentMonth(newDate);
     // Scroll will be handled by useEffect
-  };
-
-  const jumpToToday = () => {
-    const today = new Date();
-    setCurrentMonth(today);
-    // Trigger scroll after state update
-    setTimeout(() => {
-      setHasScrolledToToday(false);
-    }, 50);
   };
 
   if (loading) {

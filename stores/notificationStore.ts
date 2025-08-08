@@ -18,7 +18,7 @@ interface NotificationState {
   updateRequestsBadgeCount: (count: number) => void;
   markRequestAsSeen: (requestId: number) => void;
   markAllRequestsAsSeen: () => void;
-  fetchAndUpdateBadges: (username: string, role: string) => Promise<void>;
+  fetchAndUpdateBadges: (username: string, role: string, doctorCode?: string) => Promise<void>;
   clearBadges: () => void;
   resetStore: () => void;
 }
@@ -50,12 +50,11 @@ const useNotificationStore = create<NotificationState>((set, get) => ({
   },
   
   // Fetch and update badges based on user role
-  fetchAndUpdateBadges: async (username: string, role: string) => {
+  fetchAndUpdateBadges: async (username: string, role: string, doctorCode?: string) => {
     try {
       const requests = await api.getShiftChangeRequests();
       
       if (!requests || !Array.isArray(requests)) {
-        console.log('No requests returned from API');
         set({ 
           swapBadgeCount: 0,
           pendingRequests: []
@@ -72,29 +71,41 @@ const useNotificationStore = create<NotificationState>((set, get) => ({
         set({ swapBadgeCount: pendingCount });
         
       } else {
-        // REGULAR USER LOGIC: Badge shows unseen updates
-        // Badge clears when they view the swap screen
+        // REGULAR USER LOGIC: Badge shows unseen updates for ANY involvement
         const { seenRequestIds } = get();
         
-        // Count their own approved/denied requests they haven't seen
-        const unseenOwnRequests = requests.filter(
-          req => req.requester_username === username && 
-                 (req.status === 'approved' || req.status === 'denied') &&
-                 !seenRequestIds.has(req.id)
-        );
+        // Filter for all requests where user is involved that they haven't seen
+        const unseenRequests = requests.filter(req => {
+          // Skip if already seen
+          if (seenRequestIds.has(req.id)) {
+            return false;
+          }
+          
+          // Check if user is involved in any way:
+          
+          // 1. User is the requester (for approved/denied requests only)
+          if (req.requester_username === username && 
+              (req.status === 'approved' || req.status === 'denied')) {
+            return true;
+          }
+          
+          // 2. User is involved in a pending swap (as FROM or TO doctor)
+          // BUT not if they are the requester (don't show badge for own pending requests)
+          if (req.status === 'pending' && doctorCode && req.requester_username !== username) {
+            // Check if user's doctor code appears as either from_doctor or to_doctor
+            const isInvolved = req.shifts.some((shift: any) => 
+              shift.from_doctor === doctorCode || 
+              shift.to_doctor === doctorCode
+            );
+            if (isInvolved) {
+              return true;
+            }
+          }
+          
+          return false;
+        });
         
-        // Count incoming swap requests (pending requests where they're the recipient)
-        const unseenIncomingSwaps = requests.filter(
-          req => req.status === 'pending' &&
-                 req.shifts.some((shift: any) => 
-                   shift.to_doctor === username || 
-                   shift.to_doctor?.toLowerCase() === username.toLowerCase()
-                 ) &&
-                 !seenRequestIds.has(req.id)
-        );
-        
-        const totalUnseen = unseenOwnRequests.length + unseenIncomingSwaps.length;
-        set({ swapBadgeCount: totalUnseen });
+        set({ swapBadgeCount: unseenRequests.length });
       }
     } catch (error) {
       console.error('Error fetching requests for badges:', error);

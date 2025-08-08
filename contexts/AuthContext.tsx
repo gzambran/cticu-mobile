@@ -33,7 +33,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     // Handle navigation based on auth state
-    const inTabsScreen = segments[0] === '(tabs)';
     const inLoginScreen = segments[0] === 'login';
     
     if (!isLoading) {

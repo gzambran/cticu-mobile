@@ -42,14 +42,27 @@ function SwapScreen() {
     loadRequests();
   }, []);
 
-  // Auto-collapse form if user has existing swaps
+  // Auto-collapse form if user has ANY involvement in existing swaps
   useEffect(() => {
-    const userHasSwaps = requests.some(
-      request => request.requester_username === user?.username ||
-      request.shifts.some(shift => shift.to_doctor === user?.fullName || shift.to_doctor === user?.username)
-    );
-    // Keep form open for new users, collapsed for returning users with swaps
-    setShowCreateForm(!userHasSwaps);
+    const userHasAnyInvolvement = requests.some(request => {
+      // User is the requester
+      if (request.requester_username === user?.username) {
+        return true;
+      }
+      
+      // User is involved as FROM or TO doctor in any shift
+      if (user?.doctorCode) {
+        return request.shifts.some(shift => 
+          shift.from_doctor === user.doctorCode || 
+          shift.to_doctor === user.doctorCode
+        );
+      }
+      
+      return false;
+    });
+    
+    // Keep form open for new users, collapsed for users with any swap involvement
+    setShowCreateForm(!userHasAnyInvolvement);
   }, [requests, user]);
 
   // Clear badges for regular users when viewing swap screen
@@ -61,7 +74,7 @@ function SwapScreen() {
         const timer = setTimeout(() => {
           markAllRequestsAsSeen();
           // Update badge to reflect seen status
-          fetchAndUpdateBadges(user.username, user.role);
+          fetchAndUpdateBadges(user.username, user.role, user.doctorCode)
         }, 100);
         
         return () => clearTimeout(timer);
@@ -75,7 +88,7 @@ function SwapScreen() {
       // Refresh data when screen gains focus
       if (user && !loading && !refreshing) {
         loadRequests(true);
-        fetchAndUpdateBadges(user.username, user.role);
+        fetchAndUpdateBadges(user.username, user.role, user.doctorCode)
       }
     }, [user?.username, user?.role])
   );
@@ -109,7 +122,7 @@ function SwapScreen() {
       
       // Refresh badges after creating a request
       if (user) {
-        fetchAndUpdateBadges(user.username, user.role);
+        fetchAndUpdateBadges(user.username, user.role, user.doctorCode)
       }
       
       // Don't auto-close the form after submission
@@ -126,7 +139,7 @@ function SwapScreen() {
       
       // Refresh badges
       if (user) {
-        fetchAndUpdateBadges(user.username, user.role);
+        fetchAndUpdateBadges(user.username, user.role, user.doctorCode)
       }
     } catch (error) {
       Alert.alert('Error', 'Failed to dismiss request');
@@ -150,7 +163,7 @@ function SwapScreen() {
               
               // Refresh badges to update admin count
               if (user) {
-                fetchAndUpdateBadges(user.username, user.role);
+                fetchAndUpdateBadges(user.username, user.role, user.doctorCode)
               }
             } catch (error) {
               Alert.alert('Error', 'Failed to approve shift swap');
@@ -178,7 +191,7 @@ function SwapScreen() {
               
               // Refresh badges to update admin count
               if (user) {
-                fetchAndUpdateBadges(user.username, user.role);
+                fetchAndUpdateBadges(user.username, user.role, user.doctorCode)
               }
             } catch (error) {
               Alert.alert('Error', 'Failed to deny shift swap');
@@ -190,17 +203,25 @@ function SwapScreen() {
   };
 
   const filteredRequests = requests.filter((request) => {
-    if (viewMode === 'mine') {
-      // Show user's own requests and incoming swaps
-      return (
-        request.requester_username === user?.username ||
-        request.shifts.some(shift => shift.to_doctor === user?.fullName || shift.to_doctor === user?.username)
-      );
-    } else {
-      // Admin view - show all requests (they're already filtered to pending on backend)
-      return true;
-    }
-  });
+      if (viewMode === 'mine') {
+        // Show user's own requests and swaps involving them
+        return (
+          // They created the request
+          request.requester_username === user?.username ||
+          // They're involved in the swap (as from_doctor or to_doctor)
+          request.shifts.some(shift => 
+            shift.to_doctor === user?.doctorCode || 
+            shift.from_doctor === user?.doctorCode ||
+            // Fallback to old checks for compatibility
+            shift.to_doctor === user?.fullName || 
+            shift.to_doctor === user?.username
+          )
+        );
+      } else {
+        // Admin view - show all requests (they're already filtered to pending on backend)
+        return true;
+      }
+    });
 
   const renderRequest = (request: ShiftChangeRequest) => {
     const isPending = request.status === 'pending';
@@ -364,14 +385,6 @@ function SwapScreen() {
           <View style={styles.emptyState}>
             <Text style={styles.emptyStateText}>
               No pending swap requests to review
-            </Text>
-          </View>
-        )}
-
-        {filteredRequests.length === 0 && viewMode === 'mine' && (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyStateText}>
-              No swap requests yet. Create one above!
             </Text>
           </View>
         )}

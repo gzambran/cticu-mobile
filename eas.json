@@ -33,7 +33,8 @@
       "ios": {
         "appleId": "gzambran@gmail.com",
         "ascAppId": "6747990617",
-        "appleTeamId": "LP5CPS7QZQ"
+        "appleTeamId": "LP5CPS7QZQ",
+        "groups": ["Family"]
       }
     }
   }

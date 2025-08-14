@@ -10,16 +10,23 @@
 
 This was a deliberate design choice because admins are decision-makers while users are notification consumers.
 
-### No Polling
-Removed 60-second interval refresh that was causing badge flickering and battery drain. Updates now happen only on:
-- App foreground
-- Push notification received  
-- Manual action (create/approve/deny/pull-to-refresh)
+### Badge Implementation Details
+- **Badge state tracking**: Uses `seenRequestStates: Set<string>` to track "requestId-status" combinations (e.g., "123-pending", "123-approved")
+- **When badges appear for regular users**:
+  - Requester sees badge when their swap is approved/denied (NOT when pending)
+  - Involved users (from_doctor/to_doctor) see badges for ALL states (pending, approved, denied)
+- **Badge refresh triggers**:
+  - App launch/login
+  - App foreground/background
+  - Tab navigation (any tab switch)
+  - Manual actions (create/approve/deny swaps)
+  - Navigating to swap screen
+- **No polling or push notifications** - Updates happen through natural app usage
 
-### Push Notifications
-- Physical device + development build required (not Expo Go)
-- Token registration happens on login via AuthContext
-- Notifications trigger navigation to relevant screen
+### Calendar Behavior
+- Today's date is automatically selected when viewing the current month
+- Selected date clears when navigating to other months
+- Returning to current month re-selects today's date
 
 ## Project Structure
 
@@ -27,13 +34,13 @@ Removed 60-second interval refresh that was causing badge flickering and battery
 cticu-mobile/
 ├── app/(tabs)/          # Tab screens with badge display
 │   ├── swap.tsx         # Shift swaps - main badge logic here
-│   └── _layout.tsx      # Tab bar with badge rendering
+│   └── _layout.tsx      # Tab bar with badge rendering & tab navigation checks
 ├── stores/
-│   └── notificationStore.ts  # Zustand store for badge state
+│   └── notificationStore.ts  # Zustand store for badge state (tracks request+status combos)
 ├── services/
-│   └── pushNotifications.ts  # Push handler, token management
+│   └── api.ts           # API calls for shift change requests
 └── contexts/
-    └── AuthContext.tsx  # Handles push token registration on login
+    └── AuthContext.tsx  # Handles authentication
 ```
 
 ## State Management
@@ -42,8 +49,7 @@ cticu-mobile/
 - **Auth/user context**: React Context
 - **Filters**: React Context
 
-
 ## Backend Integration
 - Shift change requests API filters by role (admins see all pending, users see their own)
-- Push notifications sent via expo-server-sdk when requests are created/approved/denied
-- Push tokens stored in database per user/device
+- Backend no longer sends push notifications (removed from approve/deny endpoints)
+- Users must be in app or refresh to see badge updates

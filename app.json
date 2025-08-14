@@ -11,7 +11,7 @@
     "backgroundColor": "#ffffff",
     "ios": {
       "bundleIdentifier": "com.zambrano.cticuschedule",
-      "buildNumber": "12",
+      "buildNumber": "14",
       "displayName": "CTICU",
       "supportsTablet": false,
       "infoPlist": {

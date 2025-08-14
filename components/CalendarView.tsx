@@ -62,8 +62,15 @@ export default function CalendarView({ selectedDoctor, onSelectDoctor, onSetting
       setLastLoadedMonth({ year, month });
     }
     
-    // Clear selected date if it's not in the current month view
-    if (selectedDate) {
+    // Check if we're viewing the current month
+    const today = new Date();
+    const isCurrentMonth = month === today.getMonth() && year === today.getFullYear();
+    
+    if (isCurrentMonth) {
+      // If we're on the current month, select today
+      setSelectedDate(today);
+    } else if (selectedDate) {
+      // If not on current month, clear selection if date is not in the current month view
       const selectedMonth = selectedDate.getMonth();
       const selectedYear = selectedDate.getFullYear();
       if (selectedMonth !== month || selectedYear !== year) {
@@ -154,7 +161,6 @@ export default function CalendarView({ selectedDoctor, onSelectDoctor, onSetting
         onSelectDoctor={onSelectDoctor}
         doctors={doctors}
         includeAllOption={true}
-        // Modern minimal styling - no gray backgrounds, clean text
         triggerStyle={styles.doctorFilterButton}
         triggerTextStyle={styles.doctorFilterText}
       />
@@ -329,21 +335,19 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: '#C6C6C8',
   },
-  // Modern minimal styling for the doctor filter
   doctorFilterButton: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
     paddingVertical: 8,
-    maxWidth: 100,  // Limit width to prevent overlap
-    // No background color or border radius - clean and minimal
+    maxWidth: 100,
   },
   doctorFilterText: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#007AFF',  // Blue like other interactive elements
-    flex: 0,  // Override the default flex: 1 from DoctorPickerModal
-    minWidth: 30,  // Fixed minimum width to prevent text shifting
+    color: '#007AFF',
+    flex: 0,
+    minWidth: 30,
   },
   monthNavigation: {
     flexDirection: 'row',
@@ -363,7 +367,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     color: '#000',
-    width: 50, // Fixed width to prevent shifting
+    width: 50,
     textAlign: 'center',
   },
   weekDaysContainer: {
@@ -396,7 +400,7 @@ const styles = StyleSheet.create({
   selectedDateContainer: {
     backgroundColor: 'white',
     padding: 16,
-    minHeight: 120, // Ensure consistent height even when empty
+    minHeight: 120,
   },
   selectedDateHeader: {
     marginBottom: 12,

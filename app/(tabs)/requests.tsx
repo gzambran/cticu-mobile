@@ -119,7 +119,7 @@ export default function RequestsScreen() {
 
   const upcomingQuarterStart = getUpcomingQuarterStart();
   const quarterName = getQuarterName(upcomingQuarterStart);
-  const userDoctor = user?.fullName || user?.username || '';
+  const userDoctor = user?.doctorCode || '';
 
   return (
     <View style={styles.container}>

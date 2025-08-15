@@ -11,8 +11,7 @@
     "backgroundColor": "#ffffff",
     "ios": {
       "bundleIdentifier": "com.zambrano.cticuschedule",
-      "buildNumber": "14",
-      "displayName": "CTICU",
+      "buildNumber": "17",
       "supportsTablet": false,
       "infoPlist": {
         "NSAppTransportSecurity": {

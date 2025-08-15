@@ -24,18 +24,41 @@ function SwapScreen() {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const { doctors } = useDoctors();
-  const [requests, setRequests] = useState<ShiftChangeRequest[]>([]);
+  
+  // Use store as single source of truth for requests
+  const pendingRequests = useNotificationStore(state => state.pendingRequests);
+  const markAllRequestsAsSeen = useNotificationStore(state => state.markAllRequestsAsSeen);
+  const fetchAndUpdateBadges = useNotificationStore(state => state.fetchAndUpdateBadges);
+  
+  // Local state only for UI concerns
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [viewMode, setViewMode] = useState<'mine' | 'admin'>('mine');
-  const [showCreateForm, setShowCreateForm] = useState(true); // Show form by default
-
-  // Notification store hooks
-  const markRequestAsSeen = useNotificationStore(state => state.markRequestAsSeen);
-  const markAllRequestsAsSeen = useNotificationStore(state => state.markAllRequestsAsSeen);
-  const fetchAndUpdateBadges = useNotificationStore(state => state.fetchAndUpdateBadges);
+  const [showCreateForm, setShowCreateForm] = useState(true);
 
   const isAdmin = user?.role === 'admin';
+
+  // Helper function to load/refresh data through the store
+  const loadRequests = async (isRefresh = false) => {
+    if (isRefresh) setRefreshing(true);
+    else setLoading(true);
+
+    try {
+      // Use the store's fetch method which updates pendingRequests
+      if (user) {
+        await fetchAndUpdateBadges(user.username, user.role, user.doctorCode);
+      }
+    } catch (error) {
+      console.error('Error loading shift swap requests:', error);
+      // Only show error on initial load, not refresh
+      if (!isRefresh) {
+        Alert.alert('Note', 'No shift swap requests found');
+      }
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
 
   // Load requests on mount
   useEffect(() => {
@@ -44,7 +67,7 @@ function SwapScreen() {
 
   // Auto-collapse form if user has ANY involvement in existing swaps
   useEffect(() => {
-    const userHasAnyInvolvement = requests.some(request => {
+    const userHasAnyInvolvement = pendingRequests.some(request => {
       // User is the requester
       if (request.requester_username === user?.username) {
         return true;
@@ -63,7 +86,7 @@ function SwapScreen() {
     
     // Keep form open for new users, collapsed for users with any swap involvement
     setShowCreateForm(!userHasAnyInvolvement);
-  }, [requests, user]);
+  }, [pendingRequests, user]);
 
   // Clear badges for regular users when viewing swap screen
   // Admins never clear badges (they clear when requests are handled)
@@ -74,7 +97,7 @@ function SwapScreen() {
         const timer = setTimeout(() => {
           markAllRequestsAsSeen();
           // Update badge to reflect seen status
-          fetchAndUpdateBadges(user.username, user.role, user.doctorCode)
+          fetchAndUpdateBadges(user.username, user.role, user.doctorCode);
         }, 100);
         
         return () => clearTimeout(timer);
@@ -88,42 +111,15 @@ function SwapScreen() {
       // Refresh data when screen gains focus
       if (user && !loading && !refreshing) {
         loadRequests(true);
-        fetchAndUpdateBadges(user.username, user.role, user.doctorCode)
       }
     }, [user?.username, user?.role])
   );
-
-  const loadRequests = async (isRefresh = false) => {
-    if (isRefresh) setRefreshing(true);
-    else setLoading(true);
-
-    try {
-      const data = await api.getShiftChangeRequests();
-      setRequests(data || []);
-    } catch (error) {
-      console.error('Error loading shift swap requests:', error);
-      // For now, let's set empty array instead of showing error
-      setRequests([]);
-      // Only show error on initial load, not refresh
-      if (!isRefresh) {
-        Alert.alert('Note', 'No shift swap requests found');
-      }
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  };
 
   const handleCreateSwap = async (shifts: ShiftChange[], notes?: string) => {
     try {
       await api.createShiftChangeRequest(shifts, notes);
       Alert.alert('Success', 'Shift swap request submitted');
       await loadRequests();
-      
-      // Refresh badges after creating a request
-      if (user) {
-        fetchAndUpdateBadges(user.username, user.role, user.doctorCode)
-      }
       
       // Don't auto-close the form after submission
       // Let the useEffect handle it based on whether user now has swaps
@@ -135,12 +131,7 @@ function SwapScreen() {
   const handleAcknowledge = async (requestId: number) => {
     try {
       await api.acknowledgeShiftChangeRequest(requestId);
-      await loadRequests(); // Request will disappear
-      
-      // Refresh badges
-      if (user) {
-        fetchAndUpdateBadges(user.username, user.role, user.doctorCode)
-      }
+      await loadRequests(); // Request will disappear after refresh
     } catch (error) {
       Alert.alert('Error', 'Failed to dismiss request');
     }
@@ -160,11 +151,6 @@ function SwapScreen() {
               await api.approveShiftChangeRequest(requestId);
               Alert.alert('Success', 'Shift swap approved');
               await loadRequests();
-              
-              // Refresh badges to update admin count
-              if (user) {
-                fetchAndUpdateBadges(user.username, user.role, user.doctorCode)
-              }
             } catch (error) {
               Alert.alert('Error', 'Failed to approve shift swap');
             }
@@ -188,11 +174,6 @@ function SwapScreen() {
               await api.denyShiftChangeRequest(requestId);
               Alert.alert('Success', 'Shift swap denied');
               await loadRequests();
-              
-              // Refresh badges to update admin count
-              if (user) {
-                fetchAndUpdateBadges(user.username, user.role, user.doctorCode)
-              }
             } catch (error) {
               Alert.alert('Error', 'Failed to deny shift swap');
             }
@@ -202,26 +183,27 @@ function SwapScreen() {
     );
   };
 
-  const filteredRequests = requests.filter((request) => {
-      if (viewMode === 'mine') {
-        // Show user's own requests and swaps involving them
-        return (
-          // They created the request
-          request.requester_username === user?.username ||
-          // They're involved in the swap (as from_doctor or to_doctor)
-          request.shifts.some(shift => 
-            shift.to_doctor === user?.doctorCode || 
-            shift.from_doctor === user?.doctorCode ||
-            // Fallback to old checks for compatibility
-            shift.to_doctor === user?.fullName || 
-            shift.to_doctor === user?.username
-          )
-        );
-      } else {
-        // Admin view - show all requests (they're already filtered to pending on backend)
-        return true;
-      }
-    });
+  // Filter requests based on view mode
+  const filteredRequests = pendingRequests.filter((request) => {
+    if (viewMode === 'mine') {
+      // Show user's own requests and swaps involving them
+      return (
+        // They created the request
+        request.requester_username === user?.username ||
+        // They're involved in the swap (as from_doctor or to_doctor)
+        request.shifts.some(shift => 
+          shift.to_doctor === user?.doctorCode || 
+          shift.from_doctor === user?.doctorCode ||
+          // Fallback to old checks for compatibility
+          shift.to_doctor === user?.fullName || 
+          shift.to_doctor === user?.username
+        )
+      );
+    } else {
+      // Admin view - show all requests (they're already filtered to pending on backend)
+      return true;
+    }
+  });
 
   const renderRequest = (request: ShiftChangeRequest) => {
     const isPending = request.status === 'pending';
@@ -255,7 +237,7 @@ function SwapScreen() {
         </View>
 
         <View style={styles.requestBody}>
-          {request.shifts.map((shift, index) => (
+          {request.shifts.map((shift: any, index: number) => (
             <View key={index} style={styles.shiftRow}>
               <Text style={styles.shiftText}>
                 {new Date(shift.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}

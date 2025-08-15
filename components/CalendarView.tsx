@@ -1,7 +1,8 @@
+import { ForegroundContext } from '@/app/(tabs)/_layout';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -33,11 +34,18 @@ export default function CalendarView({ selectedDoctor, onSelectDoctor, onSetting
   const [holidays, setHolidays] = useState<Holidays>({});
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<Date | null>(new Date()); // Initialize with today's date
+  const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
   const [isOffline, setIsOffline] = useState(false);
   const [firstDayMonday, setFirstDayMonday] = useState(false);
   const [lastLoadedMonth, setLastLoadedMonth] = useState<{ year: number; month: number } | null>(null);
   const { doctors } = useDoctors();
+  
+  // Track if we're already refreshing to prevent duplicate refreshes
+  const isRefreshingRef = useRef(false);
+  const lastKnownDateRef = useRef(new Date().toDateString());
+  
+  // Get foreground context
+  const { lastForegroundTime } = useContext(ForegroundContext);
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
@@ -50,6 +58,41 @@ export default function CalendarView({ selectedDoctor, onSelectDoctor, onSetting
     }, [])
   );
 
+  // Handle foreground events from context
+  useEffect(() => {
+    const today = new Date();
+    const todayString = today.toDateString();
+    
+    // Check if the date has changed
+    const dateChanged = todayString !== lastKnownDateRef.current;
+    
+    if (dateChanged) {
+      lastKnownDateRef.current = todayString;
+      
+      // Check if we need to navigate to current month
+      const currentMonth = today.getMonth();
+      const currentYear = today.getFullYear();
+      
+      // Auto-navigate to current month if the month has actually changed
+      if (currentDate.getMonth() !== currentMonth || currentDate.getFullYear() !== currentYear) {
+        setCurrentDate(today);
+      }
+      
+      // Always update selected date to today if viewing current month
+      const viewingCurrentMonth = currentDate.getMonth() === currentMonth && 
+                                 currentDate.getFullYear() === currentYear;
+      if (viewingCurrentMonth) {
+        setSelectedDate(today);
+      }
+    }
+    
+    // Refresh data when coming to foreground (unless already refreshing)
+    if (!isRefreshingRef.current) {
+      loadData(false, true); // silent refresh
+    }
+  }, [lastForegroundTime]); // Triggered when foreground time updates
+
+  // Handle month navigation
   useEffect(() => {
     // Only reload data if we've navigated outside our loaded range
     const needsReload = !lastLoadedMonth || 
@@ -62,15 +105,14 @@ export default function CalendarView({ selectedDoctor, onSelectDoctor, onSetting
       setLastLoadedMonth({ year, month });
     }
     
-    // Check if we're viewing the current month
+    // Update selected date when navigating months
     const today = new Date();
     const isCurrentMonth = month === today.getMonth() && year === today.getFullYear();
     
     if (isCurrentMonth) {
-      // If we're on the current month, select today
       setSelectedDate(today);
     } else if (selectedDate) {
-      // If not on current month, clear selection if date is not in the current month view
+      // Clear selection if date is not in the current month view
       const selectedMonth = selectedDate.getMonth();
       const selectedYear = selectedDate.getFullYear();
       if (selectedMonth !== month || selectedYear !== year) {
@@ -90,9 +132,19 @@ export default function CalendarView({ selectedDoctor, onSelectDoctor, onSetting
     }
   };
 
-  const loadData = async (isRefresh = false) => {
-    if (isRefresh) setRefreshing(true);
-    else setLoading(true);
+  const loadData = async (isRefresh = false, isSilent = false) => {
+    // Prevent duplicate refreshes
+    if (isRefreshingRef.current) {
+      return;
+    }
+    
+    isRefreshingRef.current = true;
+    
+    if (isRefresh) {
+      setRefreshing(true);
+    } else if (!isSilent) {
+      setLoading(true);
+    }
     
     setIsOffline(false);
 
@@ -101,8 +153,8 @@ export default function CalendarView({ selectedDoctor, onSelectDoctor, onSetting
       const { start, end } = getMultiMonthBounds(year, month, 4);
       
       const [schedulesData, holidaysData] = await Promise.all([
-        api.getSchedules(start, end, isRefresh),
-        api.getHolidays(start, end, isRefresh),
+        api.getSchedules(start, end, isRefresh || isSilent),
+        api.getHolidays(start, end, isRefresh || isSilent),
       ]);
 
       // Merge with existing data to build up cache over time
@@ -111,38 +163,31 @@ export default function CalendarView({ selectedDoctor, onSelectDoctor, onSetting
     } catch (error) {
       setIsOffline(true);
       
-      // Handle specific error types
-      if (error instanceof NetworkError) {
-        Alert.alert(
-          'Connection Error',
-          error.message,
-          [{ text: 'OK' }]
-        );
-      } else if (error instanceof AuthError && error.code === 'SESSION_EXPIRED') {
-        Alert.alert(
-          'Session Expired',
-          'Your session has expired. Please sign in again.',
-          [{ text: 'OK' }]
-        );
-      } else if (error instanceof ApiError) {
-        Alert.alert(
-          'Error',
-          'Unable to load schedule data. Please try again later.',
-          [{ text: 'OK' }]
-        );
-      } else {
-        // Generic error handling
-        if (__DEV__ && error instanceof Error) {
+      // Only show alerts for user-initiated refreshes
+      if (!isSilent) {
+        if (error instanceof NetworkError) {
+          Alert.alert('Connection Error', error.message, [{ text: 'OK' }]);
+        } else if (error instanceof AuthError && error.code === 'SESSION_EXPIRED') {
+          Alert.alert('Session Expired', 'Your session has expired. Please sign in again.', [{ text: 'OK' }]);
+        } else if (error instanceof ApiError) {
+          Alert.alert('Error', 'Unable to load schedule data. Please try again later.', [{ text: 'OK' }]);
+        } else if (__DEV__ && error instanceof Error) {
           console.error('Error loading data:', error.message);
         }
       }
     } finally {
       setLoading(false);
       setRefreshing(false);
+      isRefreshingRef.current = false;
     }
   };
 
   const navigateMonth = (direction: 'prev' | 'next') => {
+    // Cancel any in-progress refresh if user is navigating
+    if (isRefreshingRef.current) {
+      isRefreshingRef.current = false;
+    }
+    
     const newDate = new Date(currentDate);
     newDate.setMonth(newDate.getMonth() + (direction === 'prev' ? -1 : 1));
     setCurrentDate(newDate);
@@ -152,6 +197,14 @@ export default function CalendarView({ selectedDoctor, onSelectDoctor, onSetting
     const today = new Date();
     setCurrentDate(today);
     setSelectedDate(today);
+  };
+
+  const handleManualRefresh = () => {
+    // Cancel any in-progress silent refresh and do a user-initiated refresh
+    if (isRefreshingRef.current) {
+      isRefreshingRef.current = false;
+    }
+    loadData(true);
   };
 
   const renderHeader = () => (
@@ -231,7 +284,6 @@ export default function CalendarView({ selectedDoctor, onSelectDoctor, onSetting
 
   const renderSelectedDateInfo = () => {
     if (!selectedDate) {
-      // Show empty state when no date is selected
       return (
         <View style={styles.selectedDateContainer}>
           <Text style={styles.noSelectionText}>Select a date to view details</Text>
@@ -303,7 +355,7 @@ export default function CalendarView({ selectedDoctor, onSelectDoctor, onSetting
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
-            onRefresh={() => loadData(true)}
+            onRefresh={handleManualRefresh}
             tintColor="#007AFF"
           />
         }
@@ -463,28 +515,5 @@ const styles = StyleSheet.create({
     color: '#8E8E93',
     textAlign: 'center',
     paddingVertical: 30,
-  },
-  legendContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    padding: 16,
-    backgroundColor: 'white',
-    marginTop: 8,
-  },
-  legendItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginRight: 16,
-    marginBottom: 8,
-  },
-  legendDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    marginRight: 6,
-  },
-  legendText: {
-    fontSize: 14,
-    color: '#3C3C43',
   },
 });

@@ -167,10 +167,9 @@ export default function DoctorPickerModal({
             activeOpacity={1}
             onPress={handleClose}
           />
-          <Animated.View 
+          <Animated.View
             style={[
-              styles.modalContent, 
-              { paddingBottom: Math.max(insets.bottom, 20) },
+              styles.modalContent,
               { transform: [{ translateY: slideAnim }] }
             ]}
           >
@@ -206,6 +205,7 @@ export default function DoctorPickerModal({
               )}
               ItemSeparatorComponent={() => <View style={styles.separator} />}
               style={styles.list}
+              contentContainerStyle={{ paddingBottom: Math.max(insets.bottom, 20) }}
             />
           </Animated.View>
         </Animated.View>

@@ -2,7 +2,7 @@
   "expo": {
     "name": "CTICU",
     "slug": "cticu-mobile",
-    "version": "1.1.0",
+    "version": "1.1.1",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "cticumobile",
@@ -11,7 +11,7 @@
     "backgroundColor": "#ffffff",
     "ios": {
       "bundleIdentifier": "com.zambrano.cticuschedule",
-      "buildNumber": "17",
+      "buildNumber": "18",
       "supportsTablet": false,
       "infoPlist": {
         "NSAppTransportSecurity": {

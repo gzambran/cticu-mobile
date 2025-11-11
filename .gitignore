@@ -122,6 +122,7 @@ fastlane/test_output
 # Project specific
 app-example/
 .expo-shared/
+CLAUDE.md
 
 # Bundle artifacts
 *.bundle

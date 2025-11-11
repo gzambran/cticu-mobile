@@ -1,4 +1,4 @@
-import authService from '@/services/auth';
+import api from '@/services/api';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
 interface DoctorsContextType {
@@ -15,17 +15,12 @@ export function DoctorsProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const loadDoctors = async () => {
+  const loadDoctors = async (forceRefresh = false) => {
     try {
       setLoading(true);
       setError(null);
-      
-      const response = await authService.authenticatedFetch('/api/doctors');
-      if (!response.ok) {
-        throw new Error('Failed to load doctors');
-      }
-      
-      const data = await response.json();
+
+      const data = await api.getDoctors(forceRefresh);
       setDoctors(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load doctors');
@@ -41,7 +36,7 @@ export function DoctorsProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const refreshDoctors = async () => {
-    await loadDoctors();
+    await loadDoctors(true); // Force refresh when manually requested
   };
 
   return (

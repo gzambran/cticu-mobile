@@ -10,26 +10,6 @@ export function parseDate(dateStr: string): Date {
   return new Date(year, month - 1, day);
 }
 
-export function getMonthName(date: Date): string {
-  return date.toLocaleDateString('en-US', { month: 'long' });
-}
-
-export function getMonthYear(date: Date): string {
-  return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-}
-
-export function getDaysInMonth(year: number, month: number): Date[] {
-  const days: Date[] = [];
-  const date = new Date(year, month, 1);
-  
-  while (date.getMonth() === month) {
-    days.push(new Date(date));
-    date.setDate(date.getDate() + 1);
-  }
-  
-  return days;
-}
-
 export function getCalendarDays(year: number, month: number, firstDayMonday = false): (Date | null)[] {
   const firstDay = new Date(year, month, 1);
   const lastDay = new Date(year, month + 1, 0);
@@ -71,23 +51,6 @@ export function isToday(date: Date): boolean {
     date.getMonth() === today.getMonth() &&
     date.getFullYear() === today.getFullYear()
   );
-}
-
-export function isSameMonth(date1: Date, date2: Date): boolean {
-  return (
-    date1.getMonth() === date2.getMonth() &&
-    date1.getFullYear() === date2.getFullYear()
-  );
-}
-
-export function getMonthBounds(year: number, month: number): { start: string; end: string } {
-  const start = new Date(year, month, 1);
-  const end = new Date(year, month + 1, 0);
-  
-  return {
-    start: formatDate(start),
-    end: formatDate(end),
-  };
 }
 
 export function getMultiMonthBounds(year: number, month: number, monthCount: number = 4): { start: string; end: string } {

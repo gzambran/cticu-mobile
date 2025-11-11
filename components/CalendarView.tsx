@@ -320,7 +320,7 @@ export default function CalendarView({ selectedDoctor, onSelectDoctor, onSetting
             <Text style={styles.selectedDateDay}>{dayName}</Text>
             <Text style={styles.selectedDateFull}>{fullDate}</Text>
             {holiday && (
-              <Text style={styles.holidayTextInline}>⭐ {holiday}</Text>
+              <Text style={styles.holidayTextInline}>{holiday}</Text>
             )}
           </View>
         </View>
@@ -472,8 +472,8 @@ const styles = StyleSheet.create({
     color: '#8E8E93',
   },
   holidayTextInline: {
-    fontSize: 18,
-    color: '#000',
+    fontSize: 15,
+    color: '#FF6347',
     fontWeight: '500',
   },
   shiftsInfo: {

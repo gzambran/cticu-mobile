@@ -1,6 +1,4 @@
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
-import { DoctorsProvider } from '@/contexts/DoctorsContext';
-import { FilterProvider } from '@/contexts/FilterContext';
 import { DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -27,20 +25,16 @@ function RootLayoutNav() {
   return (
     <ThemeProvider value={DefaultTheme}>
       <View style={{ flex: 1, backgroundColor: '#ffffff' }}>
-        <DoctorsProvider>
-          <FilterProvider>
-            <Stack
-              screenOptions={{
-                contentStyle: { backgroundColor: '#ffffff' },
-                animation: 'none',
-              }}
-            >
-              <Stack.Screen name="login" options={{ headerShown: false }} />
-              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-              <Stack.Screen name="+not-found" />
-            </Stack>
-          </FilterProvider>
-        </DoctorsProvider>
+        <Stack
+          screenOptions={{
+            contentStyle: { backgroundColor: '#ffffff' },
+            animation: 'none',
+          }}
+        >
+          <Stack.Screen name="login" options={{ headerShown: false }} />
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="+not-found" />
+        </Stack>
         <StatusBar style="dark" />
       </View>
     </ThemeProvider>

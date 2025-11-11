@@ -1,4 +1,6 @@
 import { useAuth } from '@/contexts/AuthContext';
+import { DoctorsProvider } from '@/contexts/DoctorsContext';
+import { FilterProvider } from '@/contexts/FilterContext';
 import useNotificationStore from '@/stores/notificationStore';
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs, usePathname } from 'expo-router';
@@ -79,73 +81,77 @@ export default function TabLayout() {
   }, [user?.username, user?.role, user?.doctorCode]);
 
   return (
-    <ForegroundContext.Provider value={{ lastForegroundTime, isComingFromBackground }}>
-      <Tabs
-        screenOptions={{
-          tabBarActiveTintColor: '#007AFF',
-          tabBarInactiveTintColor: '#8E8E93',
-          headerShown: false,
-          tabBarStyle: {
-            backgroundColor: '#FFFFFF',
-            borderTopColor: '#E5E5EA',
-            borderTopWidth: 0.5,
-            elevation: 0,
-            shadowOpacity: 0,
-          },
-        }}>
-        <Tabs.Screen
-          name="index"
-          options={{
-            title: 'Schedule',
-            headerShown: false,
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="calendar" size={size} color={color} />
-            ),
-          }}
-        />
-        <Tabs.Screen
-          name="swing-shifts"
-          options={{
-            title: 'Swing',
-            headerShown: false,
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="help-buoy-outline" size={size} color={color} />
-            ),
-          }}
-        />
-        <Tabs.Screen
-          name="swap"
-          options={{
-            title: 'Swap',
-            headerShown: false,
-            tabBarBadge: swapBadgeCount > 0 ? swapBadgeCount : undefined,
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="swap-horizontal" size={size} color={color} />
-            ),
-          }}
-        />
-        <Tabs.Screen
-          name="requests"
-          options={{
-            title: 'Requests',
-            headerShown: false,
-            tabBarBadge: requestsBadgeCount > 0 ? requestsBadgeCount : undefined,
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="create-outline" size={size} color={color} />
-            ),
-          }}
-        />
-        <Tabs.Screen
-          name="settings"
-          options={{
-            title: 'Settings',
-            headerShown: false,
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="person-circle-outline" size={size} color={color} />
-            ),
-          }}
-        />
-      </Tabs>
-    </ForegroundContext.Provider>
+    <DoctorsProvider>
+      <FilterProvider>
+        <ForegroundContext.Provider value={{ lastForegroundTime, isComingFromBackground }}>
+          <Tabs
+            screenOptions={{
+              tabBarActiveTintColor: '#007AFF',
+              tabBarInactiveTintColor: '#8E8E93',
+              headerShown: false,
+              tabBarStyle: {
+                backgroundColor: '#FFFFFF',
+                borderTopColor: '#E5E5EA',
+                borderTopWidth: 0.5,
+                elevation: 0,
+                shadowOpacity: 0,
+              },
+            }}>
+            <Tabs.Screen
+              name="index"
+              options={{
+                title: 'Schedule',
+                headerShown: false,
+                tabBarIcon: ({ color, size }) => (
+                  <Ionicons name="calendar" size={size} color={color} />
+                ),
+              }}
+            />
+            <Tabs.Screen
+              name="swing-shifts"
+              options={{
+                title: 'Swing',
+                headerShown: false,
+                tabBarIcon: ({ color, size }) => (
+                  <Ionicons name="help-buoy-outline" size={size} color={color} />
+                ),
+              }}
+            />
+            <Tabs.Screen
+              name="swap"
+              options={{
+                title: 'Swap',
+                headerShown: false,
+                tabBarBadge: swapBadgeCount > 0 ? swapBadgeCount : undefined,
+                tabBarIcon: ({ color, size }) => (
+                  <Ionicons name="swap-horizontal" size={size} color={color} />
+                ),
+              }}
+            />
+            <Tabs.Screen
+              name="requests"
+              options={{
+                title: 'Requests',
+                headerShown: false,
+                tabBarBadge: requestsBadgeCount > 0 ? requestsBadgeCount : undefined,
+                tabBarIcon: ({ color, size }) => (
+                  <Ionicons name="create-outline" size={size} color={color} />
+                ),
+              }}
+            />
+            <Tabs.Screen
+              name="settings"
+              options={{
+                title: 'Settings',
+                headerShown: false,
+                tabBarIcon: ({ color, size }) => (
+                  <Ionicons name="person-circle-outline" size={size} color={color} />
+                ),
+              }}
+            />
+          </Tabs>
+        </ForegroundContext.Provider>
+      </FilterProvider>
+    </DoctorsProvider>
   );
 }

@@ -38,6 +38,7 @@ export default function SwingShiftsScreen() {
 
   useEffect(() => {
     loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -46,6 +47,7 @@ export default function SwingShiftsScreen() {
       scrollToRelevantDate();
       setHasScrolledToToday(true);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading]);
 
   useEffect(() => {
@@ -66,6 +68,7 @@ export default function SwingShiftsScreen() {
         }
       }, 100);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentMonth]);
 
   const loadData = async (isRefresh = false) => {
@@ -110,7 +113,7 @@ export default function SwingShiftsScreen() {
       if (isRefresh) {
         await refreshDoctors();
       }
-    } catch (error) {
+    } catch {
       Alert.alert('Error', 'Failed to load data. Please try again.');
     } finally {
       setLoading(false);
@@ -156,7 +159,7 @@ export default function SwingShiftsScreen() {
           Swing: doctor,
         },
       }));
-    } catch (error) {
+    } catch {
       Alert.alert('Error', 'Failed to update swing shift. Please try again.');
       // Reload to revert the change
       await loadData();
@@ -180,7 +183,7 @@ export default function SwingShiftsScreen() {
         ...prev,
         [date]: { unitCensus, cases },
       }));
-    } catch (error) {
+    } catch {
       Alert.alert('Error', 'Failed to update swing shift details.');
     }
   };
@@ -259,6 +262,7 @@ export default function SwingShiftsScreen() {
         }
       });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentMonth]);
 
   const navigateMonth = (direction: 'prev' | 'next') => {

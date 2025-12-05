@@ -39,9 +39,10 @@ export default function TabLayout() {
       const timer = setTimeout(() => {
         fetchAndUpdateBadges(user.username, user.role, user.doctorCode);
       }, 100);
-      
+
       return () => clearTimeout(timer);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname, user?.username, user?.role, user?.doctorCode]);
   
   // Single AppState handler for all foreground needs
@@ -78,6 +79,7 @@ export default function TabLayout() {
         subscription.remove();
       };
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.username, user?.role, user?.doctorCode]);
 
   return (

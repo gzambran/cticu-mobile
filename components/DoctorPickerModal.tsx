@@ -60,10 +60,11 @@ export default function DoctorPickerModal({
       fadeAnim.setValue(0);
       slideAnim.setValue(300);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [modalVisible]);
 
   // Build options list
-  const options: Array<{ value: string; display: string }> = [];
+  const options: { value: string; display: string }[] = [];
   
   if (includeAllOption) {
     options.push({ value: '', display: 'All' });

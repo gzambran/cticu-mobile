@@ -1,6 +1,6 @@
 import api from '@/services/api';
 import { Schedule, ShiftChange, ShiftType } from '@/types';
-import { formatDate } from '@/utils/date';
+import { formatDate, parseDate } from '@/utils/date';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -38,7 +38,7 @@ export default function SwapRequestForm({
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
   const [schedules, setSchedules] = useState<Schedule>({});
-  const [loadingSchedules, setLoadingSchedules] = useState(false);
+  const [, setLoadingSchedules] = useState(false);
 
   useEffect(() => {
     loadCurrentAndNextQuarterSchedules();
@@ -82,7 +82,7 @@ export default function SwapRequestForm({
         ['5C', '5W', 'Night'] as any
       );
       setSchedules(schedulesData);
-    } catch (error) {
+    } catch {
       Alert.alert('Error', 'Failed to load schedules');
     } finally {
       setLoadingSchedules(false);
@@ -186,7 +186,7 @@ export default function SwapRequestForm({
       await onSubmit(shifts, notes || undefined);
       setSwapRows([{ id: 1, selectedShifts: [] }]);
       setNotes('');
-    } catch (error) {
+    } catch {
       Alert.alert('Error', 'Failed to submit swap request');
     } finally {
       setLoading(false);
@@ -253,9 +253,9 @@ export default function SwapRequestForm({
                               onPress={() => toggleShiftSelection(row.id, date, shift)}
                             >
                               <Text style={[styles.shiftText, isSelected && styles.shiftTextSelected]}>
-                                {new Date(date).toLocaleDateString('en-US', { 
-                                  month: 'short', 
-                                  day: 'numeric' 
+                                {parseDate(date).toLocaleDateString('en-US', {
+                                  month: 'short',
+                                  day: 'numeric'
                                 })} - {shift}
                               </Text>
                             </TouchableOpacity>

@@ -4,6 +4,7 @@ import { useDoctors } from '@/contexts/DoctorsContext';
 import api from '@/services/api';
 import useNotificationStore from '@/stores/notificationStore';
 import { ShiftChange, ShiftChangeRequest } from '@/types';
+import { parseDate } from '@/utils/date';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
@@ -63,6 +64,7 @@ function SwapScreen() {
   // Load requests on mount
   useEffect(() => {
     loadRequests();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Auto-collapse form if user has ANY involvement in existing swaps
@@ -102,6 +104,7 @@ function SwapScreen() {
         
         return () => clearTimeout(timer);
       }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [user?.username, user?.role, isAdmin])
   );
 
@@ -112,6 +115,7 @@ function SwapScreen() {
       if (user && !loading && !refreshing) {
         loadRequests(true);
       }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [user?.username, user?.role])
   );
 
@@ -132,7 +136,7 @@ function SwapScreen() {
     try {
       await api.acknowledgeShiftChangeRequest(requestId);
       await loadRequests(); // Request will disappear after refresh
-    } catch (error) {
+    } catch {
       Alert.alert('Error', 'Failed to dismiss request');
     }
   };
@@ -151,7 +155,7 @@ function SwapScreen() {
               await api.approveShiftChangeRequest(requestId);
               Alert.alert('Success', 'Shift swap approved');
               await loadRequests();
-            } catch (error) {
+            } catch {
               Alert.alert('Error', 'Failed to approve shift swap');
             }
           },
@@ -174,7 +178,7 @@ function SwapScreen() {
               await api.denyShiftChangeRequest(requestId);
               Alert.alert('Success', 'Shift swap denied');
               await loadRequests();
-            } catch (error) {
+            } catch {
               Alert.alert('Error', 'Failed to deny shift swap');
             }
           },
@@ -240,7 +244,7 @@ function SwapScreen() {
           {request.shifts.map((shift: any, index: number) => (
             <View key={index} style={styles.shiftRow}>
               <Text style={styles.shiftText}>
-                {new Date(shift.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                {parseDate(shift.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                 {' • '}
                 {shift.shift_type}
                 {': '}

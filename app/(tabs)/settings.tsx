@@ -38,7 +38,7 @@ export default function SettingsScreen() {
       if (firstDay !== null) {
         setFirstDayMonday(JSON.parse(firstDay));
       }
-    } catch (error) {
+    } catch {
       // Settings load error - use defaults
     }
   };
@@ -65,7 +65,7 @@ export default function SettingsScreen() {
             try {
               await api.clearCache();
               Alert.alert('Success', 'Cache cleared successfully');
-            } catch (error) {
+            } catch {
               Alert.alert('Error', 'Failed to clear cache');
             }
           },

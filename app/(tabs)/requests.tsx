@@ -36,7 +36,7 @@ export default function RequestsScreen() {
       }
       const data = await response.json();
       setUnavailability(data);
-    } catch (error) {
+    } catch {
       Alert.alert('Error', 'Failed to load data. Please try again.');
     } finally {
       setLoading(false);
@@ -58,7 +58,7 @@ export default function RequestsScreen() {
 
       await loadData();
       Alert.alert('Success', `${dates.length} dates added successfully!`);
-    } catch (error) {
+    } catch {
       Alert.alert('Error', 'Failed to save dates. Please try again.');
     }
   };
@@ -76,7 +76,7 @@ export default function RequestsScreen() {
       }
 
       await loadData();
-    } catch (error) {
+    } catch {
       Alert.alert('Error', 'Failed to remove date. Please try again.');
     }
   };

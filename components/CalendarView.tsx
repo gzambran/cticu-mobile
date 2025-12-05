@@ -90,6 +90,7 @@ export default function CalendarView({ selectedDoctor, onSelectDoctor, onSetting
     if (!isRefreshingRef.current) {
       loadData(false, true); // silent refresh
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lastForegroundTime]); // Triggered when foreground time updates
 
   // Handle month navigation
@@ -119,6 +120,7 @@ export default function CalendarView({ selectedDoctor, onSelectDoctor, onSetting
         setSelectedDate(null);
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentDate]);
 
   const loadSettings = async () => {
@@ -127,7 +129,7 @@ export default function CalendarView({ selectedDoctor, onSelectDoctor, onSetting
       if (firstDay !== null) {
         setFirstDayMonday(JSON.parse(firstDay));
       }
-    } catch (error) {
+    } catch {
       // Settings load error - use defaults
     }
   };

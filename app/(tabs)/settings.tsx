@@ -6,6 +6,7 @@ import { useFilter } from '@/contexts/FilterContext';
 import api from '@/services/api';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Constants from 'expo-constants';
 import * as Linking from 'expo-linking';
 import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useState } from 'react';
@@ -208,7 +209,7 @@ export default function SettingsScreen() {
 
         {/* Version at the bottom - Apple style */}
         <View style={styles.versionContainer}>
-          <Text style={styles.versionText}>Version 1.1.1</Text>
+          <Text style={styles.versionText}>Version {Constants.expoConfig?.version}</Text>
         </View>
       </ScrollView>
 

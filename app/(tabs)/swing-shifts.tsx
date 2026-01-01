@@ -76,20 +76,24 @@ export default function SwingShiftsScreen() {
     else setLoading(true);
 
     try {
-      // Calculate date range
+      // Calculate date range - previous quarter through end of next quarter
       const today = new Date();
-      const currentMonthStart = today.getMonth();
+      const currentMonth = today.getMonth();
       const currentYear = today.getFullYear();
-      
-      const startDate = new Date(currentYear, currentMonthStart, 1);
-      
+      const currentQuarter = Math.floor(currentMonth / 3);
+
+      // Start date is beginning of previous quarter
+      const prevQuarter = (currentQuarter - 1 + 4) % 4;
+      const prevQuarterYear = currentQuarter === 0 ? currentYear - 1 : currentYear;
+      const prevQuarterStartMonth = prevQuarter * 3;
+      const startDate = new Date(prevQuarterYear, prevQuarterStartMonth, 1);
+
       // End date is end of next quarter
-      const currentQuarter = Math.floor(currentMonthStart / 3);
       const nextQuarter = (currentQuarter + 1) % 4;
       const nextQuarterYear = nextQuarter === 0 ? currentYear + 1 : currentYear;
       const quarterEndMonth = (nextQuarter * 3) + 2;
       const endDate = new Date(nextQuarterYear, quarterEndMonth + 1, 0);
-      
+
       const startStr = formatDate(startDate);
       const endStr = formatDate(endDate);
 
@@ -265,7 +269,42 @@ export default function SwingShiftsScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentMonth]);
 
+  // Calculate navigation bounds (previous quarter start to next quarter end)
+  const getNavigationBounds = () => {
+    const today = new Date();
+    const currentMonthIndex = today.getMonth();
+    const currentYear = today.getFullYear();
+    const currentQuarter = Math.floor(currentMonthIndex / 3);
+
+    // Min: First month of previous quarter
+    const prevQuarter = (currentQuarter - 1 + 4) % 4;
+    const prevQuarterYear = currentQuarter === 0 ? currentYear - 1 : currentYear;
+    const minMonth = new Date(prevQuarterYear, prevQuarter * 3, 1);
+
+    // Max: Last month of next quarter
+    const nextQuarter = (currentQuarter + 1) % 4;
+    const nextQuarterYear = nextQuarter === 0 ? currentYear + 1 : currentYear;
+    const maxMonth = new Date(nextQuarterYear, (nextQuarter * 3) + 2, 1);
+
+    return { minMonth, maxMonth };
+  };
+
+  const canNavigate = (direction: 'prev' | 'next') => {
+    const { minMonth, maxMonth } = getNavigationBounds();
+    if (direction === 'prev') {
+      return currentMonth.getFullYear() > minMonth.getFullYear() ||
+        (currentMonth.getFullYear() === minMonth.getFullYear() &&
+         currentMonth.getMonth() > minMonth.getMonth());
+    } else {
+      return currentMonth.getFullYear() < maxMonth.getFullYear() ||
+        (currentMonth.getFullYear() === maxMonth.getFullYear() &&
+         currentMonth.getMonth() < maxMonth.getMonth());
+    }
+  };
+
   const navigateMonth = (direction: 'prev' | 'next') => {
+    if (!canNavigate(direction)) return;
+
     const newDate = new Date(currentMonth);
     newDate.setMonth(newDate.getMonth() + (direction === 'prev' ? -1 : 1));
     setCurrentMonth(newDate);
@@ -292,14 +331,22 @@ export default function SwingShiftsScreen() {
       <StatusBar style="dark" />
       <View style={styles.header}>
         <View style={styles.monthNavigation}>
-          <TouchableOpacity onPress={() => navigateMonth('prev')} style={styles.navButton}>
-            <Ionicons name="chevron-back" size={24} color="#007AFF" />
+          <TouchableOpacity
+            onPress={() => navigateMonth('prev')}
+            style={styles.navButton}
+            disabled={!canNavigate('prev')}
+          >
+            <Ionicons name="chevron-back" size={24} color={canNavigate('prev') ? '#007AFF' : '#C7C7CC'} />
           </TouchableOpacity>
           <TouchableOpacity onPress={jumpToToday} style={styles.monthButton}>
             <Text style={styles.monthTitle}>{monthTitle}</Text>
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => navigateMonth('next')} style={styles.navButton}>
-            <Ionicons name="chevron-forward" size={24} color="#007AFF" />
+          <TouchableOpacity
+            onPress={() => navigateMonth('next')}
+            style={styles.navButton}
+            disabled={!canNavigate('next')}
+          >
+            <Ionicons name="chevron-forward" size={24} color={canNavigate('next') ? '#007AFF' : '#C7C7CC'} />
           </TouchableOpacity>
         </View>
       </View>

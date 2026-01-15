@@ -42,3 +42,16 @@ export const SHIFT_COLORS = {
   'Night': '#0000FF',
   'Swing': '#00AA00',
 } as const;
+
+export const EVENT_DOT_COLOR = '#9C27B0'; // Purple
+
+export const MAX_EVENT_TITLE_LENGTH = 25;
+
+export interface UserEvent {
+  id: number;
+  title: string;
+}
+
+export interface UserEvents {
+  [date: string]: UserEvent;
+}

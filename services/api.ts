@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Holidays, Schedule, ShiftChange, ShiftChangeRequest, ShiftType, Unavailability } from '../types';
+import { Holidays, Schedule, ShiftChange, ShiftChangeRequest, ShiftType, Unavailability, UserEvents } from '../types';
 import authService, { AuthError, NetworkError } from './auth';
 
 const CACHE_DURATION = 3600000 * 4; // 4 hours for multi-month data
@@ -280,14 +280,123 @@ class ApiService {
     }
   }
 
+  // User Events Methods
+  async getUserEvents(startDate: string, endDate: string, forceRefresh = false): Promise<UserEvents> {
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dateRegex.test(startDate) || !dateRegex.test(endDate)) {
+      throw new ApiError('Invalid date format. Expected YYYY-MM-DD');
+    }
+
+    const cacheKey = `userEvents_${startDate}_${endDate}`;
+    return this.fetchWithCache<UserEvents>(
+      cacheKey,
+      `/api/user-events?startDate=${startDate}&endDate=${endDate}`,
+      forceRefresh
+    );
+  }
+
+  async createUserEvent(date: string, title: string): Promise<{ id: number }> {
+    try {
+      const response = await authService.authenticatedFetch('/api/user-events', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ date, title }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new ApiError(
+          errorData?.error || `Request failed with status: ${response.status}`,
+          response.status
+        );
+      }
+
+      const data = await response.json();
+      await this.invalidateUserEventsCache();
+      return data;
+    } catch (error) {
+      if (error instanceof AuthError || error instanceof NetworkError || error instanceof ApiError) {
+        throw error;
+      }
+      throw new ApiError('Failed to create user event');
+    }
+  }
+
+  async updateUserEvent(eventId: number, title: string): Promise<void> {
+    try {
+      const response = await authService.authenticatedFetch(`/api/user-events/${eventId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ title }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new ApiError(
+          errorData?.error || `Request failed with status: ${response.status}`,
+          response.status
+        );
+      }
+
+      await this.invalidateUserEventsCache();
+    } catch (error) {
+      if (error instanceof AuthError || error instanceof NetworkError || error instanceof ApiError) {
+        throw error;
+      }
+      throw new ApiError('Failed to update user event');
+    }
+  }
+
+  async deleteUserEvent(eventId: number): Promise<void> {
+    try {
+      const response = await authService.authenticatedFetch(`/api/user-events/${eventId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new ApiError(
+          errorData?.error || `Request failed with status: ${response.status}`,
+          response.status
+        );
+      }
+
+      await this.invalidateUserEventsCache();
+    } catch (error) {
+      if (error instanceof AuthError || error instanceof NetworkError || error instanceof ApiError) {
+        throw error;
+      }
+      throw new ApiError('Failed to delete user event');
+    }
+  }
+
+  private async invalidateUserEventsCache(): Promise<void> {
+    try {
+      const keys = await AsyncStorage.getAllKeys();
+      const userEventKeys = keys.filter(key => key.startsWith('userEvents_'));
+      if (userEventKeys.length > 0) {
+        await AsyncStorage.multiRemove(userEventKeys);
+      }
+    } catch (error) {
+      if (__DEV__) {
+        console.error('Failed to invalidate user events cache:', error);
+      }
+    }
+  }
+
   async clearCache(): Promise<void> {
     try {
       const keys = await AsyncStorage.getAllKeys();
-      const cacheKeys = keys.filter(key => 
-        key.startsWith('doctors') || 
-        key.startsWith('schedules_') || 
-        key.startsWith('unavailability') || 
-        key.startsWith('holidays_')
+      const cacheKeys = keys.filter(key =>
+        key.startsWith('doctors') ||
+        key.startsWith('schedules_') ||
+        key.startsWith('unavailability') ||
+        key.startsWith('holidays_') ||
+        key.startsWith('userEvents_')
       );
       
       if (cacheKeys.length > 0) {
@@ -305,11 +414,12 @@ class ApiService {
   async hasOfflineData(): Promise<boolean> {
     try {
       const keys = await AsyncStorage.getAllKeys();
-      return keys.some(key => 
-        key.startsWith('doctors') || 
-        key.startsWith('schedules_') || 
-        key.startsWith('unavailability') || 
-        key.startsWith('holidays_')
+      return keys.some(key =>
+        key.startsWith('doctors') ||
+        key.startsWith('schedules_') ||
+        key.startsWith('unavailability') ||
+        key.startsWith('holidays_') ||
+        key.startsWith('userEvents_')
       );
     } catch {
       return false;

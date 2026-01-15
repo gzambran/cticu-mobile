@@ -5,7 +5,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { SHIFT_COLORS, ShiftType } from '../types';
+import { EVENT_DOT_COLOR, SHIFT_COLORS, ShiftType } from '../types';
 import { isToday } from '../utils/date';
 
 interface DayCellProps {
@@ -19,6 +19,7 @@ interface DayCellProps {
   holiday?: string;
   selectedDoctor?: string;
   isSelected?: boolean;
+  hasEvent?: boolean;
   onPress: () => void;
 }
 
@@ -28,6 +29,7 @@ export default function DayCell({
   holiday,
   selectedDoctor,
   isSelected,
+  hasEvent,
   onPress,
 }: DayCellProps) {
   if (!date) {
@@ -79,7 +81,7 @@ export default function DayCell({
         {selectedDoctor && doctorShifts.length > 0 ? (
           <View style={styles.shiftsContainer}>
             {doctorShifts.map(({ type, label }, index) => (
-              <Text 
+              <Text
                 key={type}
                 style={[
                   styles.shiftLabel,
@@ -90,11 +92,19 @@ export default function DayCell({
                 {label}
               </Text>
             ))}
+            {hasEvent && (
+              <View style={[styles.eventDot, { marginTop: 2 }]} />
+            )}
           </View>
         ) : (
-          hasSwingShift && !selectedDoctor && (
-            <View style={styles.swingDotContainer}>
-              <View style={[styles.swingDot, { backgroundColor: SHIFT_COLORS.Swing }]} />
+          (hasSwingShift || hasEvent) && (
+            <View style={styles.dotsContainer}>
+              {hasSwingShift && !selectedDoctor && (
+                <View style={[styles.swingDot, { backgroundColor: SHIFT_COLORS.Swing }]} />
+              )}
+              {hasEvent && (
+                <View style={[styles.eventDot, (hasSwingShift && !selectedDoctor) && styles.dotSpacing]} />
+              )}
             </View>
           )
         )}
@@ -140,13 +150,24 @@ const styles = StyleSheet.create({
     top: -2,
     right: -2,
   },
-  swingDotContainer: {
+  dotsContainer: {
     marginTop: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   swingDot: {
     width: 6,
     height: 6,
     borderRadius: 3,
+  },
+  eventDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: EVENT_DOT_COLOR,
+  },
+  dotSpacing: {
+    marginLeft: 3,
   },
   shiftsContainer: {
     marginTop: 2,

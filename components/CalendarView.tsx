@@ -8,6 +8,8 @@ import {
   ActivityIndicator,
   Alert,
   Dimensions,
+  KeyboardAvoidingView,
+  Platform,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -624,9 +626,12 @@ export default function CalendarView({ selectedDoctor, onSelectDoctor, onSetting
   };
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
       {isOffline && <OfflineIndicator />}
-      
+
       <ScrollView
         style={styles.scrollView}
         refreshControl={
@@ -642,7 +647,7 @@ export default function CalendarView({ selectedDoctor, onSelectDoctor, onSetting
         {renderCalendar()}
         {renderSelectedDateInfo()}
       </ScrollView>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 

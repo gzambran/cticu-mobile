@@ -10,12 +10,12 @@ import {
   ActivityIndicator,
   Alert,
   RefreshControl,
-  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { KeyboardAwareScrollView, KeyboardAwareScrollViewRef } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface SwingDetails {
@@ -33,7 +33,7 @@ export default function SwingShiftsScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const scrollViewRef = React.useRef<ScrollView>(null);
+  const scrollViewRef = React.useRef<KeyboardAwareScrollViewRef>(null);
   const [hasScrolledToToday, setHasScrolledToToday] = useState(false);
 
   useEffect(() => {
@@ -351,8 +351,9 @@ export default function SwingShiftsScreen() {
         </View>
       </View>
       
-      <ScrollView
+      <KeyboardAwareScrollView
         ref={scrollViewRef}
+        bottomOffset={120}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -369,12 +370,12 @@ export default function SwingShiftsScreen() {
             currentDoctor={schedules[formatDate(date)]?.Swing}
             details={swingDetails[formatDate(date)] || {}}
             onUpdateDoctor={(doctor) => handleUpdateSwingSchedule(formatDate(date), doctor)}
-            onUpdateDetails={(unitCensus, cases) => 
+            onUpdateDetails={(unitCensus, cases) =>
               handleUpdateSwingDetails(formatDate(date), unitCensus, cases)
             }
           />
         ))}
-      </ScrollView>
+      </KeyboardAwareScrollView>
     </View>
   );
 }

@@ -8,8 +8,6 @@ import {
   ActivityIndicator,
   Alert,
   Dimensions,
-  KeyboardAvoidingView,
-  Platform,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -20,6 +18,7 @@ import {
   NativeScrollEvent,
   NativeSyntheticEvent,
 } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { useDoctors } from '../contexts/DoctorsContext';
 import api, { ApiError } from '../services/api';
 import { AuthError, NetworkError } from '../services/auth';
@@ -626,14 +625,12 @@ export default function CalendarView({ selectedDoctor, onSelectDoctor, onSetting
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
+    <View style={styles.container}>
       {isOffline && <OfflineIndicator />}
 
-      <ScrollView
+      <KeyboardAwareScrollView
         style={styles.scrollView}
+        bottomOffset={140}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -646,8 +643,8 @@ export default function CalendarView({ selectedDoctor, onSelectDoctor, onSetting
         {renderWeekDays()}
         {renderCalendar()}
         {renderSelectedDateInfo()}
-      </ScrollView>
-    </KeyboardAvoidingView>
+      </KeyboardAwareScrollView>
+    </View>
   );
 }
 

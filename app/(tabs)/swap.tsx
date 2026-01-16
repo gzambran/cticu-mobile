@@ -13,12 +13,12 @@ import {
   ActivityIndicator,
   Alert,
   RefreshControl,
-  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 function SwapScreen() {
@@ -329,9 +329,9 @@ function SwapScreen() {
         </View>
       )}
 
-      <ScrollView
+      <KeyboardAwareScrollView
         style={styles.scrollView}
-        contentInsetAdjustmentBehavior="automatic"
+        bottomOffset={150}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -383,7 +383,7 @@ function SwapScreen() {
             {filteredRequests.map(renderRequest)}
           </View>
         )}
-      </ScrollView>
+      </KeyboardAwareScrollView>
     </View>
   );
 }

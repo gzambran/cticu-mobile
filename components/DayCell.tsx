@@ -20,6 +20,7 @@ interface DayCellProps {
   selectedDoctor?: string;
   isSelected?: boolean;
   hasEvent?: boolean;
+  eventIndicatorText?: string;
   onPress: () => void;
 }
 
@@ -30,6 +31,7 @@ export default function DayCell({
   selectedDoctor,
   isSelected,
   hasEvent,
+  eventIndicatorText,
   onPress,
 }: DayCellProps) {
   if (!date) {
@@ -93,7 +95,11 @@ export default function DayCell({
               </Text>
             ))}
             {hasEvent && (
-              <View style={[styles.eventDot, { marginTop: 2 }]} />
+              eventIndicatorText ? (
+                <Text style={[styles.eventIndicatorText, { marginTop: 2 }]}>{eventIndicatorText}</Text>
+              ) : (
+                <View style={[styles.eventDot, { marginTop: 2 }]} />
+              )
             )}
           </View>
         ) : (
@@ -103,7 +109,11 @@ export default function DayCell({
                 <View style={[styles.swingDot, { backgroundColor: SHIFT_COLORS.Swing }]} />
               )}
               {hasEvent && (
-                <View style={[styles.eventDot, (hasSwingShift && !selectedDoctor) && styles.dotSpacing]} />
+                eventIndicatorText ? (
+                  <Text style={[styles.eventIndicatorText, (hasSwingShift && !selectedDoctor) && styles.dotSpacing]}>{eventIndicatorText}</Text>
+                ) : (
+                  <View style={[styles.eventDot, (hasSwingShift && !selectedDoctor) && styles.dotSpacing]} />
+                )
               )}
             </View>
           )
@@ -165,6 +175,11 @@ const styles = StyleSheet.create({
     height: 6,
     borderRadius: 3,
     backgroundColor: EVENT_DOT_COLOR,
+  },
+  eventIndicatorText: {
+    fontSize: 9,
+    fontWeight: '700',
+    color: EVENT_DOT_COLOR,
   },
   dotSpacing: {
     marginLeft: 3,

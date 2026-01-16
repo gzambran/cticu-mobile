@@ -66,6 +66,9 @@ export default function CalendarView({ selectedDoctor, onSelectDoctor, onSetting
   // Check if viewing own calendar
   const isOwnCalendar = selectedDoctor === user?.doctorCode;
 
+  // Easter egg: show "OR" instead of purple dot for caroline
+  const eventIndicatorText = user?.username === 'caroline' ? 'OR' : undefined;
+
   // Reset form state when selected date changes (but keep current page)
   useEffect(() => {
     setIsEditingEvent(false);
@@ -318,6 +321,7 @@ export default function CalendarView({ selectedDoctor, onSelectDoctor, onSetting
               selectedDoctor={selectedDoctor}
               isSelected={!!(date && selectedDate && dateStr === formatDate(selectedDate))}
               hasEvent={isOwnCalendar && date ? !!userEvents[dateStr] : undefined}
+              eventIndicatorText={isOwnCalendar ? eventIndicatorText : undefined}
               onPress={() => date && setSelectedDate(date)}
             />
           );

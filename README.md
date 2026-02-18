@@ -1,55 +1,30 @@
-# CTICU Mobile App - Context for Claude
+# CTICU Mobile
 
-## Key Architecture Decisions
+A React Native (Expo) app for managing ICU physician schedules. Supports schedule viewing, shift swaps, swing shift tracking, and unavailability management.
 
-### Badge Behavior (Critical Context)
-**Admins and regular users have intentionally different badge experiences:**
+## Tech Stack
 
-- **Admin badges** = Count of pending requests that need action. Never clears until requests are approved/denied. This is a "work queue" indicator.
-- **User badges** = Count of unseen updates. Clears when they view the swap screen. This is a "notification" indicator.
+- React Native 0.79 / Expo 53
+- Expo Router v5
+- Zustand + React Context
+- TypeScript
 
-This was a deliberate design choice because admins are decision-makers while users are notification consumers.
+## Development
 
-### Badge Implementation Details
-- **Badge state tracking**: Uses `seenRequestStates: Set<string>` to track "requestId-status" combinations (e.g., "123-pending", "123-approved")
-- **When badges appear for regular users**:
-  - Requester sees badge when their swap is approved/denied (NOT when pending)
-  - Involved users (from_doctor/to_doctor) see badges for ALL states (pending, approved, denied)
-- **Badge refresh triggers**:
-  - App launch/login
-  - App foreground/background
-  - Tab navigation (any tab switch)
-  - Manual actions (create/approve/deny swaps)
-  - Navigating to swap screen
-- **No polling or push notifications** - Updates happen through natural app usage
-
-### Calendar Behavior
-- Today's date is automatically selected when viewing the current month
-- Selected date clears when navigating to other months
-- Returning to current month re-selects today's date
-
-## Project Structure
-
-```
-cticu-mobile/
-├── app/(tabs)/          # Tab screens with badge display
-│   ├── swap.tsx         # Shift swaps - main badge logic here
-│   └── _layout.tsx      # Tab bar with badge rendering & tab navigation checks
-├── stores/
-│   └── notificationStore.ts  # Zustand store for badge state (tracks request+status combos)
-├── services/
-│   └── api.ts           # API calls for shift change requests
-└── contexts/
-    └── AuthContext.tsx  # Handles authentication
+```bash
+npm start        # Start dev server
+npm run ios      # Run on iOS
+npm run lint     # Lint
 ```
 
-## State Management
-- **Schedule data**: React Query + AsyncStorage caching
-- **Badge/notification state**: Zustand (notificationStore)
-- **Auth/user context**: React Context
-- **Filters**: React Context
+## Build & Release
 
-## Backend Integration
-- Shift change requests API filters by role (admins see all pending, users see their own)
-- Backend no longer sends push notifications (removed from approve/deny endpoints)
-- Users must be in app or refresh to see badge updates
+```bash
+make ship        # Full release: bump build, build locally, submit to App Store, cleanup
+make ios-release # Build only
+make ios-submit  # Submit latest build
+make bump        # Bump build number
+make clean       # Remove .ipa files
+```
+
+Requires `jq` (`brew install jq`).

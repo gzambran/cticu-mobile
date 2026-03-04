@@ -2,8 +2,8 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   Animated,
-  FlatList,
   Modal,
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -185,29 +185,31 @@ export default function DoctorPickerModal({
               <View style={styles.headerButton} />
             </View>
 
-            <FlatList
-              data={options}
-              keyExtractor={(item) => item.value || 'empty'}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  style={styles.optionItem}
-                  onPress={() => handleSelect(item.value)}
-                >
-                  <Text style={[
-                    styles.optionText,
-                    isSelected(item.value) && styles.selectedOption
-                  ]}>
-                    {item.display}
-                  </Text>
-                  {isSelected(item.value) && (
-                    <Ionicons name="checkmark" size={20} color="#007AFF" />
-                  )}
-                </TouchableOpacity>
-              )}
-              ItemSeparatorComponent={() => <View style={styles.separator} />}
+            <ScrollView
               style={styles.list}
               contentContainerStyle={{ paddingBottom: Math.max(insets.bottom, 20) }}
-            />
+              bounces={false}
+            >
+              {options.map((item, index) => (
+                <View key={item.value || 'empty'}>
+                  {index > 0 && <View style={styles.separator} />}
+                  <TouchableOpacity
+                    style={styles.optionItem}
+                    onPress={() => handleSelect(item.value)}
+                  >
+                    <Text style={[
+                      styles.optionText,
+                      isSelected(item.value) && styles.selectedOption
+                    ]}>
+                      {item.display}
+                    </Text>
+                    {isSelected(item.value) && (
+                      <Ionicons name="checkmark" size={20} color="#007AFF" />
+                    )}
+                  </TouchableOpacity>
+                </View>
+              ))}
+            </ScrollView>
           </Animated.View>
         </Animated.View>
       </Modal>

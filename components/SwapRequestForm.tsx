@@ -79,7 +79,7 @@ export default function SwapRequestForm({
         formatDate(startDate),
         formatDate(endDate),
         false,
-        ['5C', '5W', 'Night'] as any
+        ['5C', '5W', 'Night', 'Swing']
       );
       setSchedules(schedulesData);
     } catch {

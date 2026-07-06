@@ -110,16 +110,6 @@ export default function TabLayout() {
               }}
             />
             <Tabs.Screen
-              name="swing-shifts"
-              options={{
-                title: 'Swing',
-                headerShown: false,
-                tabBarIcon: ({ color, size }) => (
-                  <Ionicons name="help-buoy-outline" size={size} color={color} />
-                ),
-              }}
-            />
-            <Tabs.Screen
               name="swap"
               options={{
                 title: 'Swap',

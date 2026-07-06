@@ -439,7 +439,7 @@ export default function CalendarView({ selectedDoctor, onSelectDoctor, onSetting
     });
 
     // Define the correct shift order
-    const shiftOrder: ShiftType[] = ['5C', '5W', 'Night', 'Swing'];
+    const shiftOrder: ShiftType[] = ['5C', '5W', 'Swing', 'Night'];
 
     // Get shifts in the correct order
     const shifts: [ShiftType, string][] = [];

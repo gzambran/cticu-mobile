@@ -247,7 +247,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#F2F2F7',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    maxHeight: '70%',
+    maxHeight: '90%',
+    overflow: 'hidden',
   },
   modalHeader: {
     flexDirection: 'row',
@@ -273,6 +274,8 @@ const styles = StyleSheet.create({
     color: '#007AFF',
   },
   list: {
+    flexShrink: 1,
+    minHeight: 0,
     backgroundColor: 'white',
   },
   optionItem: {

@@ -41,14 +41,11 @@ export default function DayCell({
   const dayNumber = date.getDate();
   const isCurrentDay = isToday(date);
 
-  // Check if there's a Swing shift for this date
-  const hasSwingShift = schedule?.Swing ? true : false;
-
   // If a doctor is selected, find ALL their shifts for this day
   const doctorShifts: { type: ShiftType; label: string }[] = [];
   if (selectedDoctor && schedule) {
     // Define the order we want to display shifts
-    const shiftOrder: ShiftType[] = ['5C', '5W', 'Night', 'Swing'];
+    const shiftOrder: ShiftType[] = ['5C', '5W', 'Swing', 'Night'];
     
     shiftOrder.forEach(shiftType => {
       if (schedule[shiftType] === selectedDoctor) {
@@ -103,17 +100,12 @@ export default function DayCell({
             )}
           </View>
         ) : (
-          (hasSwingShift || hasEvent) && (
+          hasEvent && (
             <View style={styles.dotsContainer}>
-              {hasSwingShift && !selectedDoctor && (
-                <View style={[styles.swingDot, { backgroundColor: SHIFT_COLORS.Swing }]} />
-              )}
-              {hasEvent && (
-                eventIndicatorText ? (
-                  <Text style={[styles.eventIndicatorText, (hasSwingShift && !selectedDoctor) && styles.dotSpacing]}>{eventIndicatorText}</Text>
-                ) : (
-                  <View style={[styles.eventDot, (hasSwingShift && !selectedDoctor) && styles.dotSpacing]} />
-                )
+              {eventIndicatorText ? (
+                <Text style={styles.eventIndicatorText}>{eventIndicatorText}</Text>
+              ) : (
+                <View style={styles.eventDot} />
               )}
             </View>
           )
@@ -165,11 +157,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  swingDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-  },
   eventDot: {
     width: 6,
     height: 6,
@@ -180,9 +167,6 @@ const styles = StyleSheet.create({
     fontSize: 9,
     fontWeight: '700',
     color: EVENT_DOT_COLOR,
-  },
-  dotSpacing: {
-    marginLeft: 3,
   },
   shiftsContainer: {
     marginTop: 2,

@@ -31,10 +31,14 @@
   "submit": {
     "production": {
       "ios": {
-        "appleId": "gzambran@gmail.com",
+        "ascApiKeyPath": "/Users/gzambran/.appstoreconnect/private_keys/AuthKey_YV8WXTFCPF.p8",
+        "ascApiKeyId": "YV8WXTFCPF",
+        "ascApiKeyIssuerId": "21524c57-9f2f-4c15-a62a-6c809529fa4c",
         "ascAppId": "6747990617",
         "appleTeamId": "LP5CPS7QZQ",
-        "groups": ["Family"]
+        "groups": [
+          "Family"
+        ]
       }
     }
   }

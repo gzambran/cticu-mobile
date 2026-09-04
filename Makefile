@@ -3,6 +3,11 @@
 
 APP_JSON := app.json
 
+# App Store Connect API key — lets EAS renew credentials without an Apple ID login
+export EXPO_ASC_API_KEY_PATH := $(HOME)/.appstoreconnect/private_keys/AuthKey_YV8WXTFCPF.p8
+export EXPO_ASC_KEY_ID := YV8WXTFCPF
+export EXPO_ASC_ISSUER_ID := 21524c57-9f2f-4c15-a62a-6c809529fa4c
+
 .PHONY: ship ios-release ios-submit bump clean
 
 # Build + submit with auto-bumped build number and cleanup
@@ -24,9 +29,12 @@ ship: bump
 ios-release:
 	eas build --platform ios --local --profile production --non-interactive
 
-# Submit latest .ipa (does NOT delete)
+# Submit the newest local .ipa (does NOT delete)
 ios-submit:
-	eas submit --platform ios --latest
+	@ipa=$$(ls -t ./build/*.ipa ./*.ipa 2>/dev/null | head -n1); \
+	if [ -z "$$ipa" ]; then echo "✖ No local .ipa found"; exit 1; fi; \
+	echo "▶ Submitting $$ipa…"; \
+	eas submit --platform ios --path "$$ipa"
 
 # ---- helpers ----
 

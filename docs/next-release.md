@@ -24,6 +24,20 @@ Shipped in neither 1.4.0 (build 25) nor any earlier build. Verified on device.
 
 ## Important
 
+**A. A reinstalled app opens signed in with no user record.** `contexts/AuthContext.tsx:60-74`
+
+The token lives in the iOS Keychain and survives deleting the app; `user_info` lives in
+AsyncStorage and does not. After a reinstall the app has a valid token and no user, and
+`checkAuthStatus` accepts that. Foreground refresh and badge updates never wire up because
+every effect in `app/(tabs)/_layout.tsx` is gated on `user`, and the Requests tab files
+vacation dates under an empty doctor code, which the scheduler never sees. Settings showing
+Username "Unknown" is the only tell; Sign Out recovers.
+
+Fix by taking the user from the `/api/user` response `isAuthenticated()` already fetches
+and discards, which also closes finding 14. Guarding on `authenticated && !userInfo`
+instead would sign users out on any transient AsyncStorage read failure, since `getUser()`
+returns null on error.
+
 **4. Overlapping range caches overwrite newer schedule data.** Approving a swap invalidates
 none of them.
 

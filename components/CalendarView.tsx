@@ -680,6 +680,7 @@ export default function CalendarView({ selectedDoctor, onSelectDoctor, onSetting
           showsHorizontalScrollIndicator={false}
           onScroll={handleDetailScroll}
           scrollEventThrottle={16}
+          keyboardShouldPersistTaps="handled"
         >
           {renderShiftsPage()}
           {renderEventPage()}

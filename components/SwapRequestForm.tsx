@@ -231,11 +231,12 @@ export default function SwapRequestForm({
             {row.fromDoctor && availableShifts.length > 0 && (
               <View style={styles.field}>
                 <Text style={styles.fieldLabel}>SELECT SHIFTS</Text>
-                <ScrollView 
+                <ScrollView
                   style={styles.shiftsContainer}
                   horizontal={false}
                   showsVerticalScrollIndicator={true}
                   nestedScrollEnabled={true}
+                  keyboardShouldPersistTaps="handled"
                 >
                   {groupShiftsByMonth(availableShifts).map(({ month, year, shifts }) => (
                     <View key={`${year}-${month}`} style={styles.monthGroup}>

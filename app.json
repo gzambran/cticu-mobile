@@ -11,7 +11,7 @@
     "backgroundColor": "#ffffff",
     "ios": {
       "bundleIdentifier": "com.zambrano.cticuschedule",
-      "buildNumber": "25",
+      "buildNumber": "26",
       "supportsTablet": false,
       "infoPlist": {
         "NSAppTransportSecurity": {

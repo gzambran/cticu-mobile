@@ -48,7 +48,7 @@ function SwapScreen() {
   // isConnected is optional and undefined until the first reading — treat only an
   // explicit false as offline, so the indicator never flashes during startup.
   const isDisconnected = networkState.isConnected === false;
-  const loadRequestsRef = useRef<((isRefresh?: boolean) => Promise<void>) | null>(null);
+  const loadRequestsRef = useRef<((isRefresh?: boolean, isSilent?: boolean) => Promise<void>) | null>(null);
   const isLoadingRef = useRef(false);
 
   const isAdmin = user?.role === 'admin';
@@ -79,14 +79,22 @@ function SwapScreen() {
     });
 
   // Helper function to load/refresh data through the store
-  const loadRequests = async (isRefresh = false) => {
+  // `isSilent` refreshes in the background without driving either spinner. A focus
+  // reload is not user-initiated, and animating the pull-to-refresh control for it
+  // leaves RefreshControl's reserved space under the header for the whole load.
+  const loadRequests = async (isRefresh = false, isSilent = false) => {
     if (isLoadingRef.current) {
       return;
     }
     isLoadingRef.current = true;
 
-    if (isRefresh) setRefreshing(true);
-    else setLoading(true);
+    if (isSilent) {
+      // no spinner
+    } else if (isRefresh) {
+      setRefreshing(true);
+    } else {
+      setLoading(true);
+    }
 
     try {
       // Use the store's fetch method which updates pendingRequests
@@ -146,7 +154,7 @@ function SwapScreen() {
   // which silently disabled this refresh entirely.
   useFocusEffect(
     useCallback(() => {
-      loadRequestsRef.current?.(true);
+      loadRequestsRef.current?.(false, true);
     }, [])
   );
 

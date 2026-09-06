@@ -41,7 +41,7 @@ export default function RequestsScreen() {
   // loadData or over `loading`/`refreshing` directly — it would capture their first
   // values and never see an update. It reaches the current function through this ref
   // instead, and in-flight state through a ref rather than React state.
-  const loadDataRef = useRef<((isRefresh?: boolean) => Promise<void>) | null>(null);
+  const loadDataRef = useRef<((isRefresh?: boolean, isSilent?: boolean) => Promise<void>) | null>(null);
   const isLoadingRef = useRef(false);
 
   useEffect(() => {
@@ -53,18 +53,26 @@ export default function RequestsScreen() {
   // device) never appear here until a pull-to-refresh or a force-quit.
   useFocusEffect(
     useCallback(() => {
-      loadDataRef.current?.(true);
+      loadDataRef.current?.(false, true);
     }, [])
   );
 
-  const loadData = async (isRefresh = false) => {
+  // `isSilent` refreshes in the background without driving either spinner. A focus
+  // reload is not user-initiated, and animating the pull-to-refresh control for it
+  // leaves RefreshControl's reserved space under the header for the whole load.
+  const loadData = async (isRefresh = false, isSilent = false) => {
     if (isLoadingRef.current) {
       return;
     }
     isLoadingRef.current = true;
 
-    if (isRefresh) setRefreshing(true);
-    else setLoading(true);
+    if (isSilent) {
+      // no spinner
+    } else if (isRefresh) {
+      setRefreshing(true);
+    } else {
+      setLoading(true);
+    }
 
     try {
       const response = await authService.authenticatedFetch('/api/unavailability');

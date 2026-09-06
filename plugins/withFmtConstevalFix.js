@@ -10,6 +10,12 @@ const path = require('path');
 // branch sets it back to 1). Instead, this compiles the `fmt` pod target itself at
 // C++17: base.h's `#elif FMT_CPLUSPLUS < 201709L` branch then makes fmt's own logic
 // select FMT_USE_CONSTEVAL 0, which is the one thing the header can't override.
+//
+// IMPORTANT for injection order: this patch MUST run after react_native_post_install(...),
+// not merely after `post_install do |installer|`. react_native_post_install resets
+// CLANG_CXX_LANGUAGE_STANDARD to c++20 on every pod target, so injecting before it
+// gets silently overwritten. Do not move this back to right after the post_install anchor.
+//
 // SDK 56 ships fmt 12.1.0 and does not need this. Delete this plugin then.
 const PATCH_MARKER = 'fmt-consteval-workaround';
 
@@ -47,16 +53,19 @@ module.exports = function withFmtConstevalFix(config) {
         return innerConfig;
       }
 
-      const anchor = 'post_install do |installer|';
-      if (!contents.includes(anchor)) {
+      // Match the whole react_native_post_install(...) call through its closing
+      // paren, so the patch can be injected immediately after it (see comment above
+      // on why the injection order matters).
+      const RN_POST_INSTALL = /react_native_post_install\([\s\S]*?\n\s*\)\n/;
+      if (!RN_POST_INSTALL.test(contents)) {
         throw new Error(
-          'withFmtConstevalFix: could not find post_install hook in Podfile'
+          'withFmtConstevalFix: could not find the react_native_post_install(...) call in Podfile'
         );
       }
 
       fs.writeFileSync(
         podfilePath,
-        contents.replace(anchor, anchor + '\n' + PATCH)
+        contents.replace(RN_POST_INSTALL, (match) => match + PATCH)
       );
       return innerConfig;
     },

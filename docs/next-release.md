@@ -22,6 +22,23 @@ Shipped in neither 1.4.0 (build 25) nor any earlier build. Verified on device.
   `startOfMonth`, and navigation uses `addMonths`, so shifting from the 31st can no
   longer overflow into the wrong month. Covered by `__tests__/utils/date.test.ts`.
 
+## Needs a backend change
+
+**14. Role and doctor code stay stale until a re-login.** `cticu-backend/routes/api/user.js:9-13`
+
+`GET /api/user` returns `req.user` for token auth, which is the JWT's claims from login,
+so re-reading it on the mobile side hands back the same stale values. Promoting someone to
+admin or correcting a doctor code has no effect in the app until they sign out and back in,
+with nothing prompting them to.
+
+The fix belongs in the backend: query the users table for the token path the same way the
+session path already does, a few lines further down, falling back to the claims on error.
+The mobile side already refreshes its cached user from this endpoint on every launch, so no
+app change or new build is needed once the backend returns live values.
+
+Deferred because it modifies the endpoint the app calls on every launch, and role changes
+are not expected in the near term.
+
 ## Important
 
 **A. A reinstalled app opens signed in with no user record.** `contexts/AuthContext.tsx:60-74`

@@ -3,6 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
+import { useNetworkState } from 'expo-network';
 import React, { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -44,7 +45,14 @@ export default function CalendarView({ selectedDoctor, onSelectDoctor, onSetting
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
-  const [isOffline, setIsOffline] = useState(false);
+  // Tracks a failed reach of the server while the device still reports a connection
+  // (server down, DNS failure). Real disconnection is reported by useNetworkState below.
+  const [serverUnreachable, setServerUnreachable] = useState(false);
+  const networkState = useNetworkState();
+  // isConnected is optional and undefined until the first reading — treat only an
+  // explicit false as offline, so the banner never flashes during startup.
+  const isDisconnected = networkState.isConnected === false;
+  const isOffline = isDisconnected || serverUnreachable;
   const [firstDayMonday, setFirstDayMonday] = useState(false);
   const [lastLoadedMonth, setLastLoadedMonth] = useState<{ year: number; month: number } | null>(null);
   const { doctors } = useDoctors();
@@ -173,11 +181,11 @@ export default function CalendarView({ selectedDoctor, onSelectDoctor, onSetting
     
     if (isRefresh) {
       setRefreshing(true);
-    } else if (!isSilent) {
+    } else if (!isSilent && Object.keys(schedules).length === 0) {
+      // Only blank the calendar for the very first load. Later month navigations keep
+      // the existing grid on screen rather than flashing a full-screen spinner.
       setLoading(true);
     }
-    
-    setIsOffline(false);
 
     try {
       // Load current month + next 3 months (4 months total)
@@ -204,8 +212,10 @@ export default function CalendarView({ selectedDoctor, onSelectDoctor, onSetting
       if (isOwnCalendar && results[2]) {
         setUserEvents(prev => ({ ...prev, ...results[2] }));
       }
+
+      setServerUnreachable(false);
     } catch (error) {
-      setIsOffline(true);
+      setServerUnreachable(true);
       
       // Network failures are communicated by the offline banner, which renders on
       // every path here — alerting as well would repeat it on each month navigation.

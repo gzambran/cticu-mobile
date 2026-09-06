@@ -81,6 +81,10 @@ export default function CalendarView({ selectedDoctor, onSelectDoctor, onSetting
 
   // Check if viewing own calendar
   const isOwnCalendar = selectedDoctor === user?.doctorCode;
+  // Tracks the previous isOwnCalendar value so the events backfill effect below can
+  // detect the specific "just switched to yourself" transition, rather than
+  // re-fetching on every render where the filter is already yourself.
+  const prevIsOwnCalendarRef = useRef(isOwnCalendar);
 
   // Easter egg: show "OR" instead of purple dot for caroline
   const eventIndicatorText = user?.username === 'caroline' ? 'OR' : undefined;
@@ -179,6 +183,28 @@ export default function CalendarView({ selectedDoctor, onSelectDoctor, onSetting
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentDate]);
+
+  // Own-calendar events are only requested by loadData when isOwnCalendar was
+  // already true at the time it ran, and that reload effect above only depends on
+  // currentDate. Without this, switching the filter to yourself shows no events
+  // (and the create form silently offers to overwrite one it never fetched) until
+  // some unrelated cause reloads the calendar.
+  useEffect(() => {
+    const justSwitchedToOwnCalendar = isOwnCalendar && !prevIsOwnCalendarRef.current;
+    prevIsOwnCalendarRef.current = isOwnCalendar;
+
+    if (!justSwitchedToOwnCalendar) {
+      return;
+    }
+
+    const { start, end } = getMultiMonthBounds(year, month, 4);
+    api.getUserEvents(start, end, true)
+      .then(events => setUserEvents(prev => ({ ...prev, ...events })))
+      .catch(() => {
+        // Best-effort backfill; the next full reload (focus, foreground, or month
+        // navigation) will retry if this one fails.
+      });
+  }, [isOwnCalendar, year, month]);
 
   const loadSettings = async () => {
     try {

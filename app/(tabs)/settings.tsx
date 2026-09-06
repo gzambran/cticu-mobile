@@ -1,4 +1,5 @@
 import DoctorPickerModal from '@/components/DoctorPickerModal';
+import OfflineIndicator from '@/components/OfflineIndicator';
 import PasswordChangeModal from '@/components/PasswordChangeModal';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDoctors } from '@/contexts/DoctorsContext';
@@ -105,6 +106,8 @@ export default function SettingsScreen() {
     <View style={styles.container}>
       <View style={[styles.statusBarBackground, { height: insets.top }]} />
       <StatusBar style="dark" />
+      {isDisconnected && <OfflineIndicator reason="offline" />}
+
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Settings</Text>
       </View>
@@ -193,9 +196,9 @@ export default function SettingsScreen() {
           
           <View style={styles.cardContent}>
             {/* Clearing saved data offline would leave nothing to fall back on and no
-                way to reload, so the row is unavailable until there is a connection.
-                The right-hand label replaces the chevron rather than adding a line, so
-                the row height never changes as connectivity comes and goes. */}
+                way to reload it, so the row is unavailable until there is a connection.
+                The banner at the top of the screen says why; a greyed row is the
+                standard affordance for "not available right now". */}
             <TouchableOpacity
               style={styles.settingRow}
               onPress={handleClearCache}
@@ -207,13 +210,7 @@ export default function SettingsScreen() {
                   Clear Saved Data
                 </Text>
               </View>
-              {isDisconnected ? (
-                <Text style={styles.settingUnavailable} numberOfLines={1}>
-                  Requires internet connection
-                </Text>
-              ) : (
-                <Ionicons name="chevron-forward" size={20} color="#C7C7CC" />
-              )}
+              <Ionicons name="chevron-forward" size={20} color="#C7C7CC" />
             </TouchableOpacity>
             
             <View style={styles.divider} />
@@ -310,10 +307,6 @@ const styles = StyleSheet.create({
   },
   settingTextDisabled: {
     color: '#C7C7CC',
-  },
-  settingUnavailable: {
-    fontSize: 13,
-    color: '#8E8E93',
   },
   settingValue: {
     fontSize: 17,

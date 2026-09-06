@@ -129,6 +129,13 @@ class AuthService {
         return data.success === true;
       }
 
+      // A 5xx means the backend is down, not that anything is wrong with the
+      // password. Check before parsing: the proxy returns a non-JSON body in that
+      // case, so parsing first would fail and report a misleading auth error.
+      if (response.status >= 500) {
+        throw new NetworkError('Cannot connect to server. Please check your internet connection.');
+      }
+
       // Parse error response
       let errorData;
       try {
@@ -158,6 +165,12 @@ class AuthService {
         throw new NetworkError('Cannot connect to server. Please check your internet connection.');
       }
       
+      // Same passthrough as login: a NetworkError raised above is also an Error, so
+      // without this it gets rewrapped below as an auth failure.
+      if (error instanceof NetworkError) {
+        throw error;
+      }
+
       // Handle other errors
       if (error instanceof Error) {
         if (__DEV__) {

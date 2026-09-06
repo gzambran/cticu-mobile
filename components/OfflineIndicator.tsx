@@ -11,7 +11,7 @@ interface OfflineIndicatorProps {
 export default function OfflineIndicator({ reason = 'offline' }: OfflineIndicatorProps) {
   const icon = reason === 'server' ? 'alert-circle-outline' : 'cloud-offline-outline';
   const text = reason === 'server'
-    ? 'Trouble connecting - Try again later'
+    ? 'Trouble connecting - Data may not be current'
     : 'No internet connection';
 
   return (

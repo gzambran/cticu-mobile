@@ -1,4 +1,4 @@
-import authService from '@/services/auth';
+import authService, { NetworkError } from '@/services/auth';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import {
@@ -85,9 +85,15 @@ export default function PasswordChangeModal({ visible, onClose }: PasswordChange
         );
       }
     } catch (error: any) {
-      // Handle specific error messages from the server
-      const errorMessage = error.message || 'Failed to change password';
-      Alert.alert('Error', errorMessage);
+      // A connection failure is not a password problem, and its raw message names a
+      // server and blames the user's connection — neither is true or useful here.
+      if (error instanceof NetworkError) {
+        Alert.alert('Trouble Connecting', 'Please try again later.');
+      } else {
+        // Handle specific error messages from the server
+        const errorMessage = error.message || 'Failed to change password';
+        Alert.alert('Error', errorMessage);
+      }
     } finally {
       setIsLoading(false);
     }

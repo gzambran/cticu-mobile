@@ -148,13 +148,16 @@ export default function RequestsScreen() {
       <View style={[styles.statusBarBackground, { height: insets.top }]} />
       <StatusBar style="dark" />
       
+      {(loadFailed || isDisconnected) && (
+        <OfflineIndicator
+          reason={isDisconnected ? 'offline' : 'server'}
+          cached={Object.keys(unavailability).length > 0}
+        />
+      )}
+
       <View style={styles.header}>
         <Text style={styles.headerTitle}>{quarterName} Vacation Requests</Text>
       </View>
-
-      {loadFailed && (
-        <OfflineIndicator reason={isDisconnected ? 'offline' : 'server'} cached={false} />
-      )}
 
       <ScrollView
         style={styles.scrollView}

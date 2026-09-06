@@ -311,16 +311,16 @@ function SwapScreen() {
       <View style={[styles.statusBarBackground, { height: insets.top }]} />
       <StatusBar style="dark" />
       
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Shift Swaps</Text>
-      </View>
-
-      {loadFailed && (
+      {(loadFailed || isDisconnected) && (
         <OfflineIndicator
           reason={isDisconnected ? 'offline' : 'server'}
           cached={pendingRequests.length > 0}
         />
       )}
+
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Shift Swaps</Text>
+      </View>
 
       {isAdmin && (
         <View style={styles.segmentControl}>

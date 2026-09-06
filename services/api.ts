@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import useConnectivityStore from '../stores/connectivityStore';
 import { Holidays, Schedule, ShiftChange, ShiftChangeRequest, ShiftType, Unavailability, UserEvents } from '../types';
 import authService, { AuthError, NetworkError } from './auth';
 
@@ -12,6 +13,16 @@ export class ApiError extends Error {
   }
 }
 
+// The backend sits behind Cloudflare, so a stopped app container still completes the
+// HTTP exchange — it comes back as a 5xx status, not a thrown connection failure. Both
+// cases mean the same thing to the user: the backend can't be reached right now.
+export function isUnreachableError(error: unknown): boolean {
+  return (
+    error instanceof NetworkError ||
+    (error instanceof ApiError && typeof error.statusCode === 'number' && error.statusCode >= 500)
+  );
+}
+
 interface CachedData<T> {
   data: T;
   timestamp: number;
@@ -22,13 +33,31 @@ class ApiService {
   // (server unreachable, not true offline). Reset before a batch of requests
   // so callers can tell whether any of them fell back to stale data.
   private servedStaleCache = false;
+  // Set when a live fetch actually resolves (success path only, not the fresh-cache
+  // early return). Needed alongside servedStaleCache because neither flag alone can
+  // tell "no request was made" apart from "a request succeeded" — both leave
+  // servedStaleCache false. Reset together with it.
+  private fetchSucceeded = false;
 
   resetServedStaleCache(): void {
     this.servedStaleCache = false;
+    this.fetchSucceeded = false;
   }
 
   didServeStaleCache(): boolean {
     return this.servedStaleCache;
+  }
+
+  didFetchSucceed(): boolean {
+    return this.fetchSucceeded;
+  }
+
+  // Durable, cross-screen signal of the last thing learned from the network about the
+  // backend — unlike the two flags above, this is NOT reset per batch. Backed by the
+  // connectivity store so screens that make no requests of their own (Settings) can
+  // still observe it.
+  isBackendReachable(): boolean {
+    return useConnectivityStore.getState().backendReachable;
   }
 
   private async fetchWithCache<T>(
@@ -65,6 +94,11 @@ class ApiService {
 
       const data: T = await response.json();
 
+      // Genuine live-fetch success: a response was received and parsed, so both the
+      // per-batch flag and the durable reachability signal reflect it.
+      this.fetchSucceeded = true;
+      useConnectivityStore.getState().setBackendReachable(true);
+
       // Cache the response
       try {
         await AsyncStorage.setItem(
@@ -84,11 +118,21 @@ class ApiService {
       return data;
     } catch (error) {
       // Handle specific error types
-      if (error instanceof AuthError || error instanceof NetworkError) {
-        // For auth/network errors, try to return cached data if available
+      const unreachable = isUnreachableError(error);
+
+      if (error instanceof AuthError || unreachable) {
+        // An expired session isn't a connectivity problem, so it never flips the
+        // reachability signal or the stale-cache flag — it has its own alert.
+        if (unreachable) {
+          useConnectivityStore.getState().setBackendReachable(false);
+        }
+
+        // For auth/network/5xx errors, try to return cached data if available
         const cachedData = await this.getCachedData<T>(key);
         if (cachedData) {
-          this.servedStaleCache = true;
+          if (unreachable) {
+            this.servedStaleCache = true;
+          }
           return cachedData;
         }
         throw error;

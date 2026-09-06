@@ -32,6 +32,9 @@ function SwapScreen() {
   const pendingRequests = useNotificationStore(state => state.pendingRequests);
   const markAllRequestsAsSeen = useNotificationStore(state => state.markAllRequestsAsSeen);
   const fetchAndUpdateBadges = useNotificationStore(state => state.fetchAndUpdateBadges);
+  // fetchAndUpdateBadges swallows its own errors (other callers depend on that), so
+  // this screen's only way to know that call failed is this store flag.
+  const badgesFetchFailed = useNotificationStore(state => state.badgesFetchFailed);
   
   // Local state only for UI concerns
   const [loading, setLoading] = useState(true);
@@ -311,7 +314,7 @@ function SwapScreen() {
       <View style={[styles.statusBarBackground, { height: insets.top }]} />
       <StatusBar style="dark" />
       
-      {(loadFailed || isDisconnected) && (
+      {(loadFailed || badgesFetchFailed || isDisconnected) && (
         <OfflineIndicator
           reason={isDisconnected ? 'offline' : 'server'}
         />

@@ -1,7 +1,8 @@
 import OfflineIndicator from '@/components/OfflineIndicator';
 import RequestManagementCard from '@/components/RequestManagementCard';
 import { useAuth } from '@/contexts/AuthContext';
-import authService, { NetworkError } from '@/services/auth';
+import { ApiError, isUnreachableError } from '@/services/api';
+import authService from '@/services/auth';
 import { useNetworkState } from 'expo-network';
 import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useState } from 'react';
@@ -41,13 +42,13 @@ export default function RequestsScreen() {
     try {
       const response = await authService.authenticatedFetch('/api/unavailability');
       if (!response.ok) {
-        throw new Error('Failed to load data');
+        throw new ApiError(`Request failed with status: ${response.status}`, response.status);
       }
       const data = await response.json();
       setUnavailability(data);
       setLoadFailed(false);
     } catch (error) {
-      if (error instanceof NetworkError) {
+      if (isUnreachableError(error)) {
         setLoadFailed(true);
       } else {
         Alert.alert('Error', 'Failed to load data. Please try again.');
@@ -67,14 +68,16 @@ export default function RequestsScreen() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to add dates');
+        throw new ApiError(`Request failed with status: ${response.status}`, response.status);
       }
 
       await loadData();
       Alert.alert('Success', `${dates.length} dates added successfully!`);
-    } catch {
+    } catch (error) {
       if (isDisconnected) {
         Alert.alert('No Internet Connection', 'Check your connection and try again.');
+      } else if (isUnreachableError(error)) {
+        Alert.alert('Trouble Connecting', 'Try again later.');
       } else {
         Alert.alert('Error', 'Failed to save dates. Please try again.');
       }
@@ -90,13 +93,15 @@ export default function RequestsScreen() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to remove date');
+        throw new ApiError(`Request failed with status: ${response.status}`, response.status);
       }
 
       await loadData();
-    } catch {
+    } catch (error) {
       if (isDisconnected) {
         Alert.alert('No Internet Connection', 'Check your connection and try again.');
+      } else if (isUnreachableError(error)) {
+        Alert.alert('Trouble Connecting', 'Try again later.');
       } else {
         Alert.alert('Error', 'Failed to remove date. Please try again.');
       }

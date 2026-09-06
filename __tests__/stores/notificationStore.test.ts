@@ -160,4 +160,27 @@ describe('failure handling', () => {
     expect(useNotificationStore.getState().swapBadgeCount).toBe(0);
     expect(useNotificationStore.getState().pendingRequests).toEqual([]);
   });
+
+  it('sets badgesFetchFailed when the request fetch rejects, so a screen with no fetch of its own can still show a banner', async () => {
+    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+    mockedApi.getShiftChangeRequests.mockRejectedValue(new Error('backend unreachable'));
+
+    await useNotificationStore.getState().fetchAndUpdateBadges('gz', 'user', 'GZ');
+
+    expect(useNotificationStore.getState().badgesFetchFailed).toBe(true);
+    consoleError.mockRestore();
+  });
+
+  it('clears badgesFetchFailed on the next successful fetch', async () => {
+    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+    mockedApi.getShiftChangeRequests.mockRejectedValueOnce(new Error('backend unreachable'));
+    await useNotificationStore.getState().fetchAndUpdateBadges('gz', 'user', 'GZ');
+    expect(useNotificationStore.getState().badgesFetchFailed).toBe(true);
+
+    mockedApi.getShiftChangeRequests.mockResolvedValueOnce([]);
+    await useNotificationStore.getState().fetchAndUpdateBadges('gz', 'user', 'GZ');
+
+    expect(useNotificationStore.getState().badgesFetchFailed).toBe(false);
+    consoleError.mockRestore();
+  });
 });

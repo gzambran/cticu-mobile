@@ -13,7 +13,12 @@ interface NotificationState {
   
   // Pending requests cache
   pendingRequests: ShiftChangeRequest[];
-  
+
+  // Set when fetchAndUpdateBadges' request fails (offline or backend unreachable) and
+  // cleared on its next success, so screens with no fetch of their own (Swap) can
+  // still show a banner. fetchAndUpdateBadges itself keeps swallowing the error.
+  badgesFetchFailed: boolean;
+
   // Actions
   updateSwapBadgeCount: (count: number) => void;
   updateRequestsBadgeCount: (count: number) => void;
@@ -30,7 +35,8 @@ const useNotificationStore = create<NotificationState>((set, get) => ({
   requestsBadgeCount: 0,
   seenRequestStates: new Set(),
   pendingRequests: [],
-  
+  badgesFetchFailed: false,
+
   // Update badge counts
   updateSwapBadgeCount: (count) => set({ swapBadgeCount: count }),
   updateRequestsBadgeCount: (count) => set({ requestsBadgeCount: count }),
@@ -60,7 +66,11 @@ const useNotificationStore = create<NotificationState>((set, get) => ({
   fetchAndUpdateBadges: async (username: string, role: string, doctorCode?: string) => {
     try {
       const requests = await api.getShiftChangeRequests();
-      
+
+      // A response came back, so whatever happens with its contents below is not a
+      // connectivity failure.
+      set({ badgesFetchFailed: false });
+
       if (!requests || !Array.isArray(requests)) {
         set({ 
           swapBadgeCount: 0,
@@ -124,7 +134,7 @@ const useNotificationStore = create<NotificationState>((set, get) => ({
       }
     } catch (error) {
       console.error('Error fetching requests for badges:', error);
-      set({ swapBadgeCount: 0 });
+      set({ swapBadgeCount: 0, badgesFetchFailed: true });
     }
   },
   
@@ -142,7 +152,8 @@ const useNotificationStore = create<NotificationState>((set, get) => ({
       swapBadgeCount: 0,
       requestsBadgeCount: 0,
       seenRequestStates: new Set(),
-      pendingRequests: []
+      pendingRequests: [],
+      badgesFetchFailed: false
     });
   },
 }));

@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useDoctors } from '@/contexts/DoctorsContext';
 import { useFilter } from '@/contexts/FilterContext';
 import api from '@/services/api';
+import useConnectivityStore from '@/stores/connectivityStore';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
@@ -32,6 +33,13 @@ export default function SettingsScreen() {
   // isConnected is optional and undefined until the first reading — treat only an
   // explicit false as offline, so the row is never disabled during startup.
   const isDisconnected = networkState.isConnected === false;
+  // This screen makes no requests of its own, so it can't detect a down backend
+  // locally — it reads the same reachability signal services/api.ts updates from
+  // schedule/holiday/event fetches elsewhere in the app. Subscribing (rather than a
+  // one-off read) is what makes the row and banner update as soon as that changes,
+  // not just on a render triggered by something else.
+  const backendReachable = useConnectivityStore(state => state.backendReachable);
+  const isOffline = isDisconnected || !backendReachable;
   const [firstDayMonday, setFirstDayMonday] = useState(false);
   const [passwordModalVisible, setPasswordModalVisible] = useState(false);
 
@@ -106,7 +114,7 @@ export default function SettingsScreen() {
     <View style={styles.container}>
       <View style={[styles.statusBarBackground, { height: insets.top }]} />
       <StatusBar style="dark" />
-      {isDisconnected && <OfflineIndicator reason="offline" />}
+      {isOffline && <OfflineIndicator reason={isDisconnected ? 'offline' : 'server'} />}
 
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Settings</Text>
@@ -195,18 +203,19 @@ export default function SettingsScreen() {
           <Text style={styles.cardTitle}>MORE</Text>
           
           <View style={styles.cardContent}>
-            {/* Clearing saved data offline would leave nothing to fall back on and no
-                way to reload it, so the row is unavailable until there is a connection.
-                The banner at the top of the screen says why; a greyed row is the
-                standard affordance for "not available right now". */}
+            {/* Clearing saved data without a working connection would leave nothing to
+                fall back on and no way to reload it, so the row is unavailable both
+                when the device is offline and when the backend can't be reached. The
+                banner at the top of the screen says why; a greyed row is the standard
+                affordance for "not available right now". */}
             <TouchableOpacity
               style={styles.settingRow}
               onPress={handleClearCache}
-              disabled={isDisconnected}
+              disabled={isOffline}
             >
               <View style={styles.settingInfo}>
-                <Ionicons name="trash-outline" size={20} color={isDisconnected ? '#C7C7CC' : '#007AFF'} />
-                <Text style={[styles.settingText, isDisconnected && styles.settingTextDisabled]}>
+                <Ionicons name="trash-outline" size={20} color={isOffline ? '#C7C7CC' : '#007AFF'} />
+                <Text style={[styles.settingText, isOffline && styles.settingTextDisabled]}>
                   Clear Saved Data
                 </Text>
               </View>

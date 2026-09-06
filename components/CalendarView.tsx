@@ -21,7 +21,7 @@ import {
 } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { useDoctors } from '../contexts/DoctorsContext';
-import api, { ApiError } from '../services/api';
+import api, { ApiError, isUnreachableError } from '../services/api';
 import { AuthError, NetworkError } from '../services/auth';
 import { EVENT_DOT_COLOR, Holidays, MAX_EVENT_TITLE_LENGTH, Schedule, SHIFT_COLORS, ShiftType, UserEvents } from '../types';
 import { formatDate, getCalendarDays, getMultiMonthBounds } from '../utils/date';
@@ -216,13 +216,23 @@ export default function CalendarView({ selectedDoctor, onSelectDoctor, onSetting
         setUserEvents(prev => ({ ...prev, ...results[2] }));
       }
 
-      setServerUnreachable(api.didServeStaleCache());
+      // Three-way, not a boolean: a stale fallback proves the backend is unreachable;
+      // a live success proves it isn't; but if every range was served from fresh
+      // cache, no request was made at all and this batch tells us nothing — leave
+      // whatever the banner already showed alone rather than incorrectly clearing it.
+      if (api.didServeStaleCache()) {
+        setServerUnreachable(true);
+      } else if (api.didFetchSucceed()) {
+        setServerUnreachable(false);
+      }
     } catch (error) {
       setServerUnreachable(true);
-      
-      // Network failures are communicated by the offline banner, which renders on
-      // every path here — alerting as well would repeat it on each month navigation.
-      if (!isSilent && !(error instanceof NetworkError)) {
+
+      // Network failures (including a 5xx, which means the same "can't reach the
+      // backend" thing over a completed HTTP exchange) are communicated by the
+      // offline banner, which renders on every path here — alerting as well would
+      // repeat it on each month navigation.
+      if (!isSilent && !isUnreachableError(error)) {
         if (error instanceof AuthError && error.code === 'SESSION_EXPIRED') {
           Alert.alert('Session Expired', 'Your session has expired. Please sign in again.', [{ text: 'OK' }]);
         } else if (error instanceof ApiError) {

@@ -111,3 +111,23 @@ describe('a rejected session is announced so the UI cannot keep showing signed i
     expect(mockedSecureStore.deleteItemAsync).not.toHaveBeenCalled();
   });
 });
+
+describe('a wrong current password does not end the session', () => {
+  it('surfaces the server message instead of signing the user out', async () => {
+    const onRejected = jest.fn();
+    authService.setSessionRejectedHandler(onRejected);
+    (global.fetch as jest.Mock).mockResolvedValue({
+      ok: false,
+      status: 401,
+      text: async () => JSON.stringify({ error: 'Current password is incorrect' }),
+      json: async () => ({ error: 'Current password is incorrect' }),
+    });
+
+    await expect(
+      authService.changePassword('wrong-current', 'new-password')
+    ).rejects.toThrow('Current password is incorrect');
+
+    expect(onRejected).not.toHaveBeenCalled();
+    expect(mockedSecureStore.deleteItemAsync).not.toHaveBeenCalled();
+  });
+});

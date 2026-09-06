@@ -116,14 +116,20 @@ class AuthService {
 
   async changePassword(currentPassword: string, newPassword: string): Promise<boolean> {
     try {
-      const response = await this.authenticatedFetch('/api/user/change-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
+      const response = await this.authenticatedFetch(
+        '/api/user/change-password',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          body: JSON.stringify({ currentPassword, newPassword }),
         },
-        body: JSON.stringify({ currentPassword, newPassword }),
-      });
+        // A 401 here means the typed current password was wrong, not that the
+        // session ended. Handled below so a typo does not sign the user out.
+        { sessionExpiryOn401: false }
+      );
 
       const responseText = await response.text();
       
@@ -193,7 +199,15 @@ class AuthService {
     }
   }
 
-  async authenticatedFetch(url: string, options: RequestInit = {}): Promise<Response> {
+  // `sessionExpiryOn401` exists because 401 is overloaded: it is the session being
+  // rejected for most endpoints, but /api/user/change-password also returns 401 to
+  // mean "the current password you typed is wrong". Callers that expect the second
+  // meaning opt out, so a typo cannot sign the user out.
+  async authenticatedFetch(
+    url: string,
+    options: RequestInit = {},
+    { sessionExpiryOn401 = true }: { sessionExpiryOn401?: boolean } = {}
+  ): Promise<Response> {
     // Get stored token if not in memory
     if (!this.authToken) {
       this.authToken = await SecureStore.getItemAsync(AUTH_TOKEN_KEY);
@@ -218,7 +232,7 @@ class AuthService {
       // If unauthorized, clear token and throw. A 401 is the server definitively
       // rejecting the session, so the UI must be told — otherwise it keeps
       // rendering as signed in while every later request fails.
-      if (response.status === 401) {
+      if (response.status === 401 && sessionExpiryOn401) {
         await this.logout();
         this.onSessionRejected?.();
         throw new AuthError('Session expired', 'SESSION_EXPIRED');

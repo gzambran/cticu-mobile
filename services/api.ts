@@ -258,6 +258,8 @@ class ApiService {
           response.status
         );
       }
+
+      await this.invalidateSchedulesCache();
     } catch (error) {
       if (error instanceof AuthError || error instanceof NetworkError || error instanceof ApiError) {
         throw error;
@@ -282,6 +284,8 @@ class ApiService {
           response.status
         );
       }
+
+      await this.invalidateSchedulesCache();
     } catch (error) {
       if (error instanceof AuthError || error instanceof NetworkError || error instanceof ApiError) {
         throw error;
@@ -306,6 +310,8 @@ class ApiService {
           response.status
         );
       }
+
+      await this.invalidateSchedulesCache();
     } catch (error) {
       if (error instanceof AuthError || error instanceof NetworkError || error instanceof ApiError) {
         throw error;
@@ -442,6 +448,24 @@ class ApiService {
     } catch (error) {
       if (__DEV__) {
         console.error('Failed to invalidate user events cache:', error);
+      }
+    }
+  }
+
+  // Every date-range window has its own cache key with its own freshness clock, so a
+  // swap that changes the schedule (approve) or that could otherwise leave a viewer
+  // looking at a stale assignment (deny, create) must drop all of them rather than
+  // try to guess which windows are affected.
+  private async invalidateSchedulesCache(): Promise<void> {
+    try {
+      const keys = await AsyncStorage.getAllKeys();
+      const scheduleKeys = keys.filter(key => key.startsWith('schedules_'));
+      if (scheduleKeys.length > 0) {
+        await AsyncStorage.multiRemove(scheduleKeys);
+      }
+    } catch (error) {
+      if (__DEV__) {
+        console.error('Failed to invalidate schedules cache:', error);
       }
     }
   }

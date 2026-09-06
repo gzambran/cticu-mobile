@@ -154,3 +154,66 @@ describe('fetchWithCache: distinguishing "no request made" from "request succeed
     expect(api.didServeStaleCache()).toBe(false);
   });
 });
+
+describe('shift-change mutations invalidate the schedule cache', () => {
+  const seedScheduleCaches = async () => {
+    // Two overlapping windows, each with its own key and its own freshness clock —
+    // exactly the layout described in finding 4. Both must be dropped on a mutation
+    // rather than left to expire on their own schedules.
+    await AsyncStorage.setItem(
+      'schedules_2026-08-01_2026-11-30',
+      JSON.stringify({ data: { '2026-10-15': { '5C': 'A' } }, timestamp: Date.now() })
+    );
+    await AsyncStorage.setItem(
+      'schedules_2026-09-01_2026-12-31',
+      JSON.stringify({ data: { '2026-10-15': { '5C': 'A' } }, timestamp: Date.now() })
+    );
+    // A differently-prefixed key must survive the invalidation.
+    await AsyncStorage.setItem(
+      'doctors',
+      JSON.stringify({ data: ['Dr. A'], timestamp: Date.now() })
+    );
+  };
+
+  const remainingKeys = async () => [...(await AsyncStorage.getAllKeys())].sort();
+
+  it('clears every schedules_* key on approve', async () => {
+    await seedScheduleCaches();
+    mockedFetch.mockResolvedValueOnce(okResponse({}));
+
+    await api.approveShiftChangeRequest(1);
+
+    expect(await remainingKeys()).toEqual(['doctors']);
+  });
+
+  it('clears every schedules_* key on deny', async () => {
+    await seedScheduleCaches();
+    mockedFetch.mockResolvedValueOnce(okResponse({}));
+
+    await api.denyShiftChangeRequest(1);
+
+    expect(await remainingKeys()).toEqual(['doctors']);
+  });
+
+  it('clears every schedules_* key on create', async () => {
+    await seedScheduleCaches();
+    mockedFetch.mockResolvedValueOnce(okResponse({}));
+
+    await api.createShiftChangeRequest([
+      { date: '2026-10-15', shiftType: '5C', from_doctor: 'A', to_doctor: 'B' } as any,
+    ]);
+
+    expect(await remainingKeys()).toEqual(['doctors']);
+  });
+
+  it('does not touch the cache when the mutation fails', async () => {
+    await seedScheduleCaches();
+    mockedFetch.mockResolvedValueOnce(errorResponse(400));
+
+    await expect(api.approveShiftChangeRequest(1)).rejects.toThrow();
+
+    expect(await remainingKeys()).toEqual(
+      ['doctors', 'schedules_2026-08-01_2026-11-30', 'schedules_2026-09-01_2026-12-31'].sort()
+    );
+  });
+});

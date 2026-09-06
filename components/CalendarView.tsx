@@ -69,6 +69,12 @@ export default function CalendarView({ selectedDoctor, onSelectDoctor, onSetting
   // Track if we're already refreshing to prevent duplicate refreshes
   const isRefreshingRef = useRef(false);
   const lastKnownDateRef = useRef(new Date().toDateString());
+  // Always points at the current render's loadData. The focus-reload effect below
+  // keeps a stable (never re-created) callback so that navigating months while the
+  // tab stays focused does not itself re-trigger the focus effect; going through
+  // this ref instead of closing over loadData directly means it still calls the
+  // version with the current month/doctor closures rather than the one from mount.
+  const loadDataRef = useRef<((isRefresh?: boolean, isSilent?: boolean) => Promise<void>) | null>(null);
 
   // Get foreground context
   const { lastForegroundTime } = useContext(ForegroundContext);
@@ -93,6 +99,19 @@ export default function CalendarView({ selectedDoctor, onSelectDoctor, onSetting
   useFocusEffect(
     React.useCallback(() => {
       loadSettings();
+    }, [])
+  );
+
+  // Reload data when this tab regains focus, so schedule changes made elsewhere
+  // (an approved/denied/created swap, which invalidates the schedule cache) are
+  // picked up without waiting for a background/foreground cycle. The callback is
+  // intentionally kept referentially stable ([]) so this only fires on a genuine
+  // focus transition, not on every render while already focused.
+  useFocusEffect(
+    React.useCallback(() => {
+      if (!isRefreshingRef.current) {
+        loadDataRef.current?.(false, true); // silent refresh
+      }
     }, [])
   );
 
@@ -248,6 +267,10 @@ export default function CalendarView({ selectedDoctor, onSelectDoctor, onSetting
       isRefreshingRef.current = false;
     }
   };
+
+  // Keep the ref pointed at this render's loadData (current month/doctor closures)
+  // so the stable-callback focus effect above always calls the fresh version.
+  loadDataRef.current = loadData;
 
   const navigateMonth = (direction: 'prev' | 'next') => {
     // Cancel any in-progress refresh if user is navigating

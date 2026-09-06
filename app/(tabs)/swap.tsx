@@ -314,7 +314,6 @@ function SwapScreen() {
       {(loadFailed || isDisconnected) && (
         <OfflineIndicator
           reason={isDisconnected ? 'offline' : 'server'}
-          cached={pendingRequests.length > 0}
         />
       )}
 

@@ -151,7 +151,6 @@ export default function RequestsScreen() {
       {(loadFailed || isDisconnected) && (
         <OfflineIndicator
           reason={isDisconnected ? 'offline' : 'server'}
-          cached={Object.keys(unavailability).length > 0}
         />
       )}
 

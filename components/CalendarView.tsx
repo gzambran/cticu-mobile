@@ -641,7 +641,6 @@ export default function CalendarView({ selectedDoctor, onSelectDoctor, onSetting
       {isOffline && (
         <OfflineIndicator
           reason={isDisconnected ? 'offline' : 'server'}
-          cached={Object.keys(schedules).length > 0}
         />
       )}
 

@@ -66,6 +66,14 @@ class AuthService {
         return false; // Invalid credentials
       }
 
+      // A 5xx means the backend is down, not that the credentials are wrong. It
+      // arrives as a completed HTTP exchange rather than a failed connection, so it
+      // must be raised as a NetworkError explicitly — otherwise it falls through to
+      // AuthContext's catch-all and the user is told their password is invalid.
+      if (response.status >= 500) {
+        throw new NetworkError('Cannot connect to server. Please check your internet connection.');
+      }
+
       throw new AuthError(`Login failed with status: ${response.status}`);
     } catch (error) {
       // Type-safe error handling

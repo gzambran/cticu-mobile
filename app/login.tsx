@@ -35,7 +35,7 @@ export default function LoginScreen() {
         Alert.alert('Login Failed', 'Invalid username or password');
       }
     } catch {
-      Alert.alert('Error', 'Unable to connect to server. Please try again later.');
+      Alert.alert('Trouble Connecting', 'Please try again later.');
     } finally {
       setLoading(false);
     }

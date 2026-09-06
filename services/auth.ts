@@ -80,7 +80,14 @@ class AuthService {
       if (error instanceof AuthError) {
         throw error;
       }
-      
+
+      // A NetworkError raised above must pass through untouched. It is also an
+      // Error, so without this it falls into the generic branch below and is
+      // rewrapped as an AuthError — which the caller reads as bad credentials.
+      if (error instanceof NetworkError) {
+        throw error;
+      }
+
       if (error instanceof TypeError && error.message === 'Network request failed') {
         throw new NetworkError('Unable to connect to server. Please check your internet connection.');
       }

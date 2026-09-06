@@ -31,6 +31,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     checkAuthStatus();
   }, []);
 
+  // authService clears the stored token the moment the server rejects it. Without
+  // this the context would keep reporting a signed-in user, and every screen would
+  // quietly fall back to cached data instead of prompting a fresh sign-in.
+  useEffect(() => {
+    authService.setSessionRejectedHandler(() => {
+      setUser(null);
+      setIsAuthenticated(false);
+    });
+    return () => authService.setSessionRejectedHandler(null);
+  }, []);
+
   useEffect(() => {
     // Handle navigation based on auth state
     const inLoginScreen = segments[0] === 'login';

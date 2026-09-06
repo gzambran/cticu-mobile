@@ -24,6 +24,15 @@ export class NetworkError extends Error {
 class AuthService {
   private authToken: string | null = null;
 
+  // Called when the server definitively rejects the stored session. Clearing the
+  // token here without telling anyone leaves the UI believing it is still signed
+  // in, which strands the user on screens that silently serve cached data.
+  private onSessionRejected: (() => void) | null = null;
+
+  setSessionRejectedHandler(handler: (() => void) | null): void {
+    this.onSessionRejected = handler;
+  }
+
   async login(username: string, password: string): Promise<boolean> {
     try {
       const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
@@ -206,9 +215,12 @@ class AuthService {
         headers,
       });
 
-      // If unauthorized, clear token and throw
+      // If unauthorized, clear token and throw. A 401 is the server definitively
+      // rejecting the session, so the UI must be told — otherwise it keeps
+      // rendering as signed in while every later request fails.
       if (response.status === 401) {
         await this.logout();
+        this.onSessionRejected?.();
         throw new AuthError('Session expired', 'SESSION_EXPIRED');
       }
 
@@ -242,12 +254,26 @@ class AuthService {
       const token = await SecureStore.getItemAsync(AUTH_TOKEN_KEY);
       if (!token) return false;
 
-      // Verify token is still valid by making a test request
+      // Verify the token against the server when we can reach it. Being unable to
+      // ask is not the same as being told no: on a cold launch with no signal, or
+      // while the backend is down, the stored session stands and the app runs on
+      // cached data. Only a definitive rejection ends the session — a 401 is
+      // handled inside authenticatedFetch, which clears the token and notifies.
       this.authToken = token;
       const response = await this.authenticatedFetch('/api/user');
-      return response.ok;
-    } catch {
-      // If any error occurs, consider the user not authenticated
+
+      if (response.ok) {
+        return true;
+      }
+
+      // A 5xx is the backend failing to answer, not a verdict on the session.
+      return response.status >= 500;
+    } catch (error) {
+      if (error instanceof NetworkError) {
+        return true;
+      }
+      // Anything else, including the AuthError raised for a 401, means the session
+      // is genuinely unusable.
       return false;
     }
   }

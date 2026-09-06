@@ -10,6 +10,17 @@
 
 **Spec:** No separate spec document. Requirements were settled in conversation on 2026-09-06 and are captured verbatim in Global Constraints below.
 
+**Status:** Tasks 1-4 are complete and shipped; Tasks 5-8 are deferred. Task 4's `fmt`
+workaround unblocks builds on Xcode 26.6, so the SDK upgrade is no longer forced and can
+happen on its own schedule. The characterization tests from Tasks 2-3 remain in place and
+are the safety net for whenever it does. Resume at Task 5.
+
+The workaround shipped is the C++17 variant described in Task 4's fallback, not the
+`FMT_USE_CONSTEVAL=0` approach in its Step 1: `fmt` 11.0.2 defines that macro through an
+unguarded `#if/#elif` chain in `base.h`, so a command-line `-D` is always overwritten by
+the header. The patch must also be injected *after* `react_native_post_install`, which
+resets `CLANG_CXX_LANGUAGE_STANDARD` on every pod target.
+
 ## Background
 
 Build #24 failed on 2026-09-06 with `call to consteval function 'fmt::basic_format_string<...>' is not a constant expression`, entirely inside `ios/Pods/fmt/include/fmt/format-inl.h` (lines 59, 60, 1387, 1391, 1394). No application code appears in the failure.

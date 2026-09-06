@@ -1,4 +1,4 @@
-import api from '@/services/api';
+import api, { isUnreachableError } from '@/services/api';
 import { Schedule, ShiftChange, ShiftType } from '@/types';
 import { formatDate, parseDate } from '@/utils/date';
 import { Ionicons } from '@expo/vector-icons';
@@ -186,8 +186,12 @@ export default function SwapRequestForm({
       await onSubmit(shifts, notes || undefined);
       setSwapRows([{ id: 1, selectedShifts: [] }]);
       setNotes('');
-    } catch {
-      Alert.alert('Error', 'Failed to submit swap request');
+    } catch (error) {
+      if (isUnreachableError(error)) {
+        Alert.alert("Couldn't Save", 'Try again later.');
+      } else {
+        Alert.alert('Error', 'Failed to submit swap request');
+      }
     } finally {
       setLoading(false);
     }

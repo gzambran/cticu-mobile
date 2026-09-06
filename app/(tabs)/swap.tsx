@@ -2,7 +2,7 @@ import OfflineIndicator from '@/components/OfflineIndicator';
 import SwapRequestForm from '@/components/SwapRequestForm';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDoctors } from '@/contexts/DoctorsContext';
-import api from '@/services/api';
+import api, { isUnreachableError } from '@/services/api';
 import useNotificationStore from '@/stores/notificationStore';
 import { ShiftChange, ShiftChangeRequest } from '@/types';
 import { parseDate } from '@/utils/date';
@@ -146,8 +146,12 @@ function SwapScreen() {
     try {
       await api.acknowledgeShiftChangeRequest(requestId);
       await loadRequests(); // Request will disappear after refresh
-    } catch {
-      Alert.alert('Error', 'Failed to dismiss request');
+    } catch (error) {
+      if (isUnreachableError(error)) {
+        Alert.alert("Couldn't Save", 'Try again later.');
+      } else {
+        Alert.alert('Error', 'Failed to dismiss request');
+      }
     }
   };
 
@@ -165,8 +169,12 @@ function SwapScreen() {
               await api.approveShiftChangeRequest(requestId);
               Alert.alert('Success', 'Shift swap approved');
               await loadRequests();
-            } catch {
-              Alert.alert('Error', 'Failed to approve shift swap');
+            } catch (error) {
+              if (isUnreachableError(error)) {
+                Alert.alert("Couldn't Save", 'Try again later.');
+              } else {
+                Alert.alert('Error', 'Failed to approve shift swap');
+              }
             }
           },
         },
@@ -188,8 +196,12 @@ function SwapScreen() {
               await api.denyShiftChangeRequest(requestId);
               Alert.alert('Success', 'Shift swap denied');
               await loadRequests();
-            } catch {
-              Alert.alert('Error', 'Failed to deny shift swap');
+            } catch (error) {
+              if (isUnreachableError(error)) {
+                Alert.alert("Couldn't Save", 'Try again later.');
+              } else {
+                Alert.alert('Error', 'Failed to deny shift swap');
+              }
             }
           },
         },

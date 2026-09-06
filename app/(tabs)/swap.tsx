@@ -83,7 +83,11 @@ function SwapScreen() {
   // reload is not user-initiated, and animating the pull-to-refresh control for it
   // leaves RefreshControl's reserved space under the header for the whole load.
   const loadRequests = async (isRefresh = false, isSilent = false) => {
-    if (isLoadingRef.current) {
+    // Only the automatic focus reload is suppressed while another load runs. A
+    // user-initiated refresh, or the reload that follows a mutation, must always go
+    // through — dropping one of those leaves the screen showing what it showed
+    // before the user's action.
+    if (isSilent && isLoadingRef.current) {
       return;
     }
     isLoadingRef.current = true;

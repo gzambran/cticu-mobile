@@ -196,8 +196,11 @@ describe('shift-change mutations invalidate the schedule cache', () => {
 
     await api.denyShiftChangeRequest(1);
 
-    expect(await remainingKeys()).not.toEqual(['doctors']);
-    expect((await remainingKeys()).length).toBeGreaterThan(1);
+    expect(await remainingKeys()).toEqual([
+      'doctors',
+      'schedules_2026-08-01_2026-11-30',
+      'schedules_2026-09-01_2026-12-31',
+    ]);
   });
 
   it('leaves the cache alone on create', async () => {
@@ -208,7 +211,11 @@ describe('shift-change mutations invalidate the schedule cache', () => {
       { date: '2026-10-15', shiftType: '5C', from_doctor: 'A', to_doctor: 'B' } as any,
     ]);
 
-    expect((await remainingKeys()).length).toBeGreaterThan(1);
+    expect(await remainingKeys()).toEqual([
+      'doctors',
+      'schedules_2026-08-01_2026-11-30',
+      'schedules_2026-09-01_2026-12-31',
+    ]);
   });
 
   it('does not touch the cache when the mutation fails', async () => {

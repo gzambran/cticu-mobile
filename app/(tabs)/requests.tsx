@@ -3,6 +3,7 @@ import RequestManagementCard from '@/components/RequestManagementCard';
 import { useAuth } from '@/contexts/AuthContext';
 import { ApiError, isUnreachableError } from '@/services/api';
 import authService from '@/services/auth';
+import useConnectivityStore from '@/stores/connectivityStore';
 import { useNetworkState } from 'expo-network';
 import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useState } from 'react';
@@ -30,9 +31,15 @@ export default function RequestsScreen() {
   // isConnected is optional and undefined until the first reading — treat only an
   // explicit false as offline, so the indicator never flashes during startup.
   const isDisconnected = networkState.isConnected === false;
+  // This screen only loads on mount, and tabs stay mounted, so revisiting it never
+  // re-fetches and loadFailed alone would stay stale. Subscribing to the shared
+  // signal means the banner reflects what any screen last learned from the network.
+  const backendReachable = useConnectivityStore(state => state.backendReachable);
+  const setBackendReachable = useConnectivityStore(state => state.setBackendReachable);
 
   useEffect(() => {
     loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadData = async (isRefresh = false) => {
@@ -47,9 +54,12 @@ export default function RequestsScreen() {
       const data = await response.json();
       setUnavailability(data);
       setLoadFailed(false);
+      setBackendReachable(true);
     } catch (error) {
       if (isUnreachableError(error)) {
         setLoadFailed(true);
+        // This screen bypasses the api layer, so it has to report what it learned.
+        setBackendReachable(false);
       } else {
         Alert.alert('Error', 'Failed to load data. Please try again.');
       }
@@ -153,7 +163,7 @@ export default function RequestsScreen() {
       <View style={[styles.statusBarBackground, { height: insets.top }]} />
       <StatusBar style="dark" />
       
-      {(loadFailed || isDisconnected) && (
+      {(loadFailed || isDisconnected || !backendReachable) && (
         <OfflineIndicator
           reason={isDisconnected ? 'offline' : 'server'}
         />

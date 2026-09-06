@@ -146,9 +146,13 @@ function SwapScreen() {
       await api.createShiftChangeRequest(shifts, notes);
       Alert.alert('Success', 'Shift swap request submitted');
       await loadRequests();
-      
-      // Don't auto-close the form after submission
-      // Let the useEffect handle it based on whether user now has swaps
+
+      // Collapse explicitly. The auto-collapse decision is made once on load and
+      // never revisited, so that a background refresh cannot discard a form being
+      // filled in — which means it cannot close this one either. Submitting is a
+      // deliberate action and the form has already cleared itself, so there is
+      // nothing here to lose.
+      setShowCreateForm(false);
     } catch (error) {
       throw error; // Let the form component handle the error
     }

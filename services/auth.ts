@@ -277,6 +277,11 @@ class AuthService {
       const response = await this.authenticatedFetch('/api/user');
 
       if (response.ok) {
+        // A live response is the only time there is a body to refresh the cached
+        // user from. This keeps role/doctorCode current on every launch (finding
+        // 14) and repopulates a missing user record after a reinstall, where the
+        // Keychain token survives but AsyncStorage does not (finding A).
+        await this.cacheUserFromResponse(response);
         return true;
       }
 
@@ -289,6 +294,26 @@ class AuthService {
       // Anything else, including the AuthError raised for a 401, means the session
       // is genuinely unusable.
       return false;
+    }
+  }
+
+  // Best-effort refresh of the cached user record from a successful /api/user
+  // response. Unreachable/5xx callers never reach here, so there is no body to
+  // parse in those cases — the cached user must be left exactly as it was, not
+  // cleared, since it is the only record the rest of the app has.
+  private async cacheUserFromResponse(response: Response): Promise<void> {
+    try {
+      const text = await response.text();
+      if (!text) return;
+
+      const data = JSON.parse(text);
+      if (data && typeof data === 'object') {
+        await AsyncStorage.setItem(USER_KEY, JSON.stringify(data));
+      }
+    } catch (error) {
+      if (__DEV__) {
+        console.error('Error caching user info:', error);
+      }
     }
   }
 

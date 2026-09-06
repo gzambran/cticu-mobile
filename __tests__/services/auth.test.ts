@@ -112,6 +112,61 @@ describe('a rejected session is announced so the UI cannot keep showing signed i
   });
 });
 
+describe('isAuthenticated refreshes the cached user from a successful response', () => {
+  it('stores the returned body as the cached user', async () => {
+    const freshUser = { username: 'doc', role: 'admin', doctorCode: 'ZZ' };
+    (global.fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      status: 200,
+      text: async () => JSON.stringify(freshUser),
+      json: async () => freshUser,
+    });
+
+    await expect(authService.isAuthenticated()).resolves.toBe(true);
+    await expect(authService.getUser()).resolves.toEqual(freshUser);
+  });
+
+  it('leaves the cached user untouched when the backend is unreachable', async () => {
+    await AsyncStorage.setItem('user_info', JSON.stringify({ username: 'doc', role: 'user' }));
+
+    (global.fetch as jest.Mock).mockRejectedValue(
+      new TypeError('Network request failed')
+    );
+
+    await expect(authService.isAuthenticated()).resolves.toBe(true);
+    await expect(authService.getUser()).resolves.toEqual({ username: 'doc', role: 'user' });
+  });
+
+  it('leaves the cached user untouched on a 5xx', async () => {
+    await AsyncStorage.setItem('user_info', JSON.stringify({ username: 'doc', role: 'user' }));
+
+    (global.fetch as jest.Mock).mockResolvedValue({
+      ok: false,
+      status: 502,
+      text: async () => '',
+      json: async () => ({}),
+    });
+
+    await expect(authService.isAuthenticated()).resolves.toBe(true);
+    await expect(authService.getUser()).resolves.toEqual({ username: 'doc', role: 'user' });
+  });
+
+  it('does not throw when the successful response body is not valid JSON', async () => {
+    await AsyncStorage.setItem('user_info', JSON.stringify({ username: 'doc', role: 'user' }));
+
+    (global.fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      status: 200,
+      text: async () => 'not json',
+      json: async () => ({}),
+    });
+
+    await expect(authService.isAuthenticated()).resolves.toBe(true);
+    // A malformed body must not wipe the existing cached record.
+    await expect(authService.getUser()).resolves.toEqual({ username: 'doc', role: 'user' });
+  });
+});
+
 describe('a wrong current password does not end the session', () => {
   it('surfaces the server message instead of signing the user out', async () => {
     const onRejected = jest.fn();

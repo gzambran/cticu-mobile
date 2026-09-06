@@ -12,7 +12,7 @@ jest.mock('expo-secure-store', () => ({
   deleteItemAsync: jest.fn(),
 }));
 
-import authService from '@/services/auth';
+import authService, { NetworkError } from '@/services/auth';
 
 const mockedSecureStore = SecureStore as unknown as {
   getItemAsync: jest.Mock;
@@ -164,6 +164,38 @@ describe('isAuthenticated refreshes the cached user from a successful response',
     await expect(authService.isAuthenticated()).resolves.toBe(true);
     // A malformed body must not wipe the existing cached record.
     await expect(authService.getUser()).resolves.toEqual({ username: 'doc', role: 'user' });
+  });
+});
+
+describe('login only blames the password for a genuine 401', () => {
+  it('resolves false on a real credential rejection', async () => {
+    (global.fetch as jest.Mock).mockResolvedValue(response(401));
+
+    await expect(authService.login('doc', 'wrong-password')).resolves.toBe(false);
+  });
+
+  it('raises a NetworkError, not a credential failure, on a 5xx', async () => {
+    (global.fetch as jest.Mock).mockResolvedValue(response(502));
+
+    await expect(authService.login('doc', 'correct-password')).rejects.toBeInstanceOf(
+      NetworkError
+    );
+  });
+
+  it('raises a NetworkError, not a credential failure, on a Cloudflare 403', async () => {
+    (global.fetch as jest.Mock).mockResolvedValue(response(403));
+
+    await expect(authService.login('doc', 'correct-password')).rejects.toBeInstanceOf(
+      NetworkError
+    );
+  });
+
+  it('raises a NetworkError, not a credential failure, on a 429 rate limit', async () => {
+    (global.fetch as jest.Mock).mockResolvedValue(response(429));
+
+    await expect(authService.login('doc', 'correct-password')).rejects.toBeInstanceOf(
+      NetworkError
+    );
   });
 });
 

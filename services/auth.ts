@@ -83,7 +83,11 @@ class AuthService {
         throw new NetworkError('Cannot connect to server. Please check your internet connection.');
       }
 
-      throw new AuthError(`Login failed with status: ${response.status}`);
+      // Anything else (e.g. Cloudflare returning 403 for a WAF/bot rule, or 429 for
+      // rate limiting) is not a verdict on the credentials either — only a genuine
+      // 401 means the password was wrong. Reported the same way as unreachable so
+      // the user is not sent off to reset a password that was correct.
+      throw new NetworkError('Cannot connect to server. Please check your internet connection.');
     } catch (error) {
       // Type-safe error handling
       if (error instanceof AuthError) {

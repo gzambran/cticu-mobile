@@ -1,3 +1,4 @@
+import OfflineIndicator from '@/components/OfflineIndicator';
 import SwapRequestForm from '@/components/SwapRequestForm';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDoctors } from '@/contexts/DoctorsContext';
@@ -7,6 +8,7 @@ import { ShiftChange, ShiftChangeRequest } from '@/types';
 import { parseDate } from '@/utils/date';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
+import { useNetworkState } from 'expo-network';
 import { StatusBar } from 'expo-status-bar';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
@@ -36,6 +38,13 @@ function SwapScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [viewMode, setViewMode] = useState<'mine' | 'admin'>('mine');
   const [showCreateForm, setShowCreateForm] = useState(true);
+  // Set only when the load failed (offline or server unreachable), so the
+  // "no requests" empty states never get confused with a load failure.
+  const [loadFailed, setLoadFailed] = useState(false);
+  const networkState = useNetworkState();
+  // isConnected is optional and undefined until the first reading — treat only an
+  // explicit false as offline, so the indicator never flashes during startup.
+  const isDisconnected = networkState.isConnected === false;
 
   const isAdmin = user?.role === 'admin';
 
@@ -49,12 +58,10 @@ function SwapScreen() {
       if (user) {
         await fetchAndUpdateBadges(user.username, user.role, user.doctorCode);
       }
+      setLoadFailed(false);
     } catch (error) {
       console.error('Error loading shift swap requests:', error);
-      // Only show error on initial load, not refresh
-      if (!isRefresh) {
-        Alert.alert('Note', 'No shift swap requests found');
-      }
+      setLoadFailed(true);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -307,6 +314,13 @@ function SwapScreen() {
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Shift Swaps</Text>
       </View>
+
+      {loadFailed && (
+        <OfflineIndicator
+          reason={isDisconnected ? 'offline' : 'server'}
+          cached={pendingRequests.length > 0}
+        />
+      )}
 
       {isAdmin && (
         <View style={styles.segmentControl}>

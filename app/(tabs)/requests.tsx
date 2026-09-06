@@ -1,6 +1,8 @@
+import OfflineIndicator from '@/components/OfflineIndicator';
 import RequestManagementCard from '@/components/RequestManagementCard';
 import { useAuth } from '@/contexts/AuthContext';
-import authService from '@/services/auth';
+import authService, { NetworkError } from '@/services/auth';
+import { useNetworkState } from 'expo-network';
 import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useState } from 'react';
 import {
@@ -20,6 +22,13 @@ export default function RequestsScreen() {
   const [unavailability, setUnavailability] = useState<{ [doctor: string]: string[] }>({});
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  // Set only when the load failed for connectivity reasons (offline or server
+  // unreachable). This screen has no cache, so a failed load has no data to show.
+  const [loadFailed, setLoadFailed] = useState(false);
+  const networkState = useNetworkState();
+  // isConnected is optional and undefined until the first reading — treat only an
+  // explicit false as offline, so the indicator never flashes during startup.
+  const isDisconnected = networkState.isConnected === false;
 
   useEffect(() => {
     loadData();
@@ -36,8 +45,13 @@ export default function RequestsScreen() {
       }
       const data = await response.json();
       setUnavailability(data);
-    } catch {
-      Alert.alert('Error', 'Failed to load data. Please try again.');
+      setLoadFailed(false);
+    } catch (error) {
+      if (error instanceof NetworkError) {
+        setLoadFailed(true);
+      } else {
+        Alert.alert('Error', 'Failed to load data. Please try again.');
+      }
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -59,7 +73,11 @@ export default function RequestsScreen() {
       await loadData();
       Alert.alert('Success', `${dates.length} dates added successfully!`);
     } catch {
-      Alert.alert('Error', 'Failed to save dates. Please try again.');
+      if (isDisconnected) {
+        Alert.alert('No Internet Connection', 'Check your connection and try again.');
+      } else {
+        Alert.alert('Error', 'Failed to save dates. Please try again.');
+      }
     }
   };
 
@@ -77,7 +95,11 @@ export default function RequestsScreen() {
 
       await loadData();
     } catch {
-      Alert.alert('Error', 'Failed to remove date. Please try again.');
+      if (isDisconnected) {
+        Alert.alert('No Internet Connection', 'Check your connection and try again.');
+      } else {
+        Alert.alert('Error', 'Failed to remove date. Please try again.');
+      }
     }
   };
 
@@ -129,7 +151,11 @@ export default function RequestsScreen() {
       <View style={styles.header}>
         <Text style={styles.headerTitle}>{quarterName} Vacation Requests</Text>
       </View>
-      
+
+      {loadFailed && (
+        <OfflineIndicator reason={isDisconnected ? 'offline' : 'server'} cached={false} />
+      )}
+
       <ScrollView
         style={styles.scrollView}
         refreshControl={

@@ -201,6 +201,7 @@ export default function CalendarView({ selectedDoctor, onSelectDoctor, onSetting
         fetchPromises.push(api.getUserEvents(start, end, isRefresh || isSilent));
       }
 
+      api.resetServedStaleCache();
       const results = await Promise.all(fetchPromises);
       const [schedulesData, holidaysData] = results;
 
@@ -213,7 +214,7 @@ export default function CalendarView({ selectedDoctor, onSelectDoctor, onSetting
         setUserEvents(prev => ({ ...prev, ...results[2] }));
       }
 
-      setServerUnreachable(false);
+      setServerUnreachable(api.didServeStaleCache());
     } catch (error) {
       setServerUnreachable(true);
       
@@ -635,7 +636,12 @@ export default function CalendarView({ selectedDoctor, onSelectDoctor, onSetting
 
   return (
     <View style={styles.container}>
-      {isOffline && <OfflineIndicator />}
+      {isOffline && (
+        <OfflineIndicator
+          reason={isDisconnected ? 'offline' : 'server'}
+          cached={Object.keys(schedules).length > 0}
+        />
+      )}
 
       <KeyboardAwareScrollView
         style={styles.scrollView}

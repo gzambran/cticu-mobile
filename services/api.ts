@@ -18,6 +18,19 @@ interface CachedData<T> {
 }
 
 class ApiService {
+  // Set only when a live fetch fails and cached data is served in its place
+  // (server unreachable, not true offline). Reset before a batch of requests
+  // so callers can tell whether any of them fell back to stale data.
+  private servedStaleCache = false;
+
+  resetServedStaleCache(): void {
+    this.servedStaleCache = false;
+  }
+
+  didServeStaleCache(): boolean {
+    return this.servedStaleCache;
+  }
+
   private async fetchWithCache<T>(
     key: string,
     url: string,
@@ -75,6 +88,7 @@ class ApiService {
         // For auth/network errors, try to return cached data if available
         const cachedData = await this.getCachedData<T>(key);
         if (cachedData) {
+          this.servedStaleCache = true;
           return cachedData;
         }
         throw error;

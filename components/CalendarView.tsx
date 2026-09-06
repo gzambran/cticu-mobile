@@ -207,11 +207,10 @@ export default function CalendarView({ selectedDoctor, onSelectDoctor, onSetting
     } catch (error) {
       setIsOffline(true);
       
-      // Only show alerts for user-initiated refreshes
-      if (!isSilent) {
-        if (error instanceof NetworkError) {
-          Alert.alert('Connection Error', error.message, [{ text: 'OK' }]);
-        } else if (error instanceof AuthError && error.code === 'SESSION_EXPIRED') {
+      // Network failures are communicated by the offline banner, which renders on
+      // every path here — alerting as well would repeat it on each month navigation.
+      if (!isSilent && !(error instanceof NetworkError)) {
+        if (error instanceof AuthError && error.code === 'SESSION_EXPIRED') {
           Alert.alert('Session Expired', 'Your session has expired. Please sign in again.', [{ text: 'OK' }]);
         } else if (error instanceof ApiError) {
           Alert.alert('Error', 'Unable to load schedule data. Please try again later.', [{ text: 'OK' }]);

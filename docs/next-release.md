@@ -1,29 +1,22 @@
 # Next release backlog
 
-Work queued after 1.4.0 (build 25). Findings 1-14 come from a code review of `main` at
-`a9df0e5`; the full write-up with reproduction steps for each is in the review report
-(regenerate it or see the notes below — the reviewer's scratch workspace is gitignored).
+Findings 1-14 come from a code review of `main` at `a9df0e5`; the full write-up with
+reproduction steps is in `docs/code-review-2026-09-06.md`.
 
-## Critical
+Numbering follows that report, so gaps mean the item is already done.
 
-**1. Any 401 signs the user out while the UI stays signed in.**
-`services/auth.ts:210-213`, `contexts/AuthContext.tsx`, `services/api.ts:123-138`
+## On main, awaiting release
 
-`authenticatedFetch` treats every 401 as session expiry and calls `logout()`, deleting the
-token, but `AuthContext` is never told — `isAuthenticated` stays true and no redirect
-happens. Every later request then throws `AuthError('Not authenticated')`, which
-`fetchWithCache` answers by returning cached data with no age limit and no banner. A
-mistyped current password in Change Password is enough to trigger it, because the backend
-returns 401 for a wrong password. The user reads an unbounded-age schedule with nothing on
-screen indicating it, until they sign out or force-quit.
+Shipped in neither 1.4.0 (build 25) nor any earlier build. Verified on device.
 
-**2. Cold launch without a connection lands on a login wall.**
-`services/auth.ts:240-253`, `contexts/AuthContext.tsx:34-63`
-
-`isAuthenticated()` decides by making a live request, so being offline or getting a 502
-both read as "not authenticated" and redirect to login. The cached schedule is unreachable
-from there. This defeats the purpose of the cache in the exact situation it exists for: a
-phone with no signal, opening an app iOS has evicted from memory.
+- **Findings 1 and 2 — session handling.** `isAuthenticated()` distinguishes the server
+  rejecting a session from the app being unable to ask: a 401 ends it, while offline or a
+  5xx keeps it so the app opens on cached data instead of a login wall. `authService`
+  announces a genuine rejection and `AuthContext` clears its state, so the UI can no
+  longer show a signed-in user whose token has been wiped. `authenticatedFetch` takes
+  `sessionExpiryOn401`, which change-password opts out of — the backend returns 401 for a
+  wrong current password, so a typo previously destroyed the session. Covered by
+  `__tests__/services/auth.test.ts`.
 
 ## Important
 

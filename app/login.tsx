@@ -52,7 +52,6 @@ export default function LoginScreen() {
         <View style={styles.content}>
           <View style={styles.header}>
             <Text style={styles.title}>CTICU Schedule</Text>
-            <Text style={styles.subtitle}>Sign in to continue</Text>
           </View>
 
           <View style={styles.form}>
@@ -125,11 +124,6 @@ const styles = StyleSheet.create({
     fontSize: 32,
     fontWeight: 'bold',
     color: '#000',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 18,
-    color: '#8E8E93',
   },
   form: {
     gap: 20,

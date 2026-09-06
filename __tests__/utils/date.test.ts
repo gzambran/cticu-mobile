@@ -1,9 +1,11 @@
 import {
+  addMonths,
   formatDate,
   getCalendarDays,
   getMultiMonthBounds,
   isToday,
   parseDate,
+  startOfMonth,
 } from '@/utils/date';
 
 describe('formatDate', () => {
@@ -80,5 +82,40 @@ describe('getMultiMonthBounds', () => {
       start: '2026-10-01',
       end: '2027-01-31',
     });
+  });
+});
+
+describe('startOfMonth', () => {
+  it('anchors to the first of the month', () => {
+    expect(formatDate(startOfMonth(new Date(2026, 9, 31)))).toBe('2026-10-01');
+  });
+
+  it('leaves a date already on the first alone', () => {
+    expect(formatDate(startOfMonth(new Date(2026, 9, 1)))).toBe('2026-10-01');
+  });
+});
+
+describe('addMonths does not skip or stick on short months', () => {
+  // Oct 31 + 1 month via setMonth asks for "Nov 31" and rolls into Dec 1,
+  // skipping November entirely. Mar 31 - 1 asks for "Feb 31" and rolls to Mar 3,
+  // leaving the view stuck on March.
+  it('reaches November from October 31st', () => {
+    expect(formatDate(addMonths(new Date(2026, 9, 31), 1))).toBe('2026-11-01');
+  });
+
+  it('reaches February from March 31st', () => {
+    expect(formatDate(addMonths(new Date(2027, 2, 31), -1))).toBe('2027-02-01');
+  });
+
+  it('reaches February from January 31st', () => {
+    expect(formatDate(addMonths(new Date(2027, 0, 31), 1))).toBe('2027-02-01');
+  });
+
+  it('rolls forward across a year boundary', () => {
+    expect(formatDate(addMonths(new Date(2026, 11, 31), 1))).toBe('2027-01-01');
+  });
+
+  it('rolls backward across a year boundary', () => {
+    expect(formatDate(addMonths(new Date(2027, 0, 15), -1))).toBe('2026-12-01');
   });
 });

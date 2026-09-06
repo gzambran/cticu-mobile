@@ -18,14 +18,11 @@ Shipped in neither 1.4.0 (build 25) nor any earlier build. Verified on device.
   wrong current password, so a typo previously destroyed the session. Covered by
   `__tests__/services/auth.test.ts`.
 
-## Important
+- **Finding 3 — month navigation.** `currentDate` is anchored to the 1st via
+  `startOfMonth`, and navigation uses `addMonths`, so shifting from the 31st can no
+  longer overflow into the wrong month. Covered by `__tests__/utils/date.test.ts`.
 
-**3. Month navigation skips or sticks.** `components/CalendarView.tsx:250-266`
-`setMonth` is called on a date still carrying its day-of-month, so asking for "one month
-on" from Oct 31 asks for "Nov 31" and rolls into Dec 1. Only fires when the day number is
-absent from the destination month — 11 days in the next 13 months, first on 2026-10-31.
-Fix by setting the day to 1 before shifting the month, in `navigateMonth`, `jumpToToday`,
-and the initial `useState`.
+## Important
 
 **4. Overlapping range caches overwrite newer schedule data.** Approving a swap invalidates
 none of them.

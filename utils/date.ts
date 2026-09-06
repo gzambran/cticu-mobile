@@ -44,6 +44,18 @@ export function getCalendarDays(year: number, month: number, firstDayMonday = fa
   return calendarDays;
 }
 
+// The calendar tracks which month is on screen, never a day within it. Anchoring to
+// the 1st keeps month arithmetic honest: shifting a date that still carries day 31
+// asks for "November 31st", which rolls forward into December and silently skips a
+// month. Day 1 exists in every month, so it cannot overflow.
+export function startOfMonth(date: Date): Date {
+  return new Date(date.getFullYear(), date.getMonth(), 1);
+}
+
+export function addMonths(date: Date, delta: number): Date {
+  return new Date(date.getFullYear(), date.getMonth() + delta, 1);
+}
+
 export function isToday(date: Date): boolean {
   const today = new Date();
   return (

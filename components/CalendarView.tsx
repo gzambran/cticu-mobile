@@ -24,7 +24,7 @@ import { useDoctors } from '../contexts/DoctorsContext';
 import api, { ApiError, isUnreachableError } from '../services/api';
 import { AuthError, NetworkError } from '../services/auth';
 import { EVENT_DOT_COLOR, Holidays, MAX_EVENT_TITLE_LENGTH, Schedule, SHIFT_COLORS, ShiftType, UserEvents } from '../types';
-import { formatDate, getCalendarDays, getMultiMonthBounds } from '../utils/date';
+import { addMonths, formatDate, getCalendarDays, getMultiMonthBounds, startOfMonth } from '../utils/date';
 import DayCell from './DayCell';
 import DoctorPickerModal from './DoctorPickerModal';
 import OfflineIndicator from './OfflineIndicator';
@@ -38,7 +38,8 @@ interface CalendarViewProps {
 }
 
 export default function CalendarView({ selectedDoctor, onSelectDoctor, onSettingsPress }: CalendarViewProps) {
-  const [currentDate, setCurrentDate] = useState(new Date());
+  // Always the 1st of the displayed month — see startOfMonth in utils/date.
+  const [currentDate, setCurrentDate] = useState(startOfMonth(new Date()));
   const [schedules, setSchedules] = useState<Schedule>({});
   const [holidays, setHolidays] = useState<Holidays>({});
   const [userEvents, setUserEvents] = useState<UserEvents>({});
@@ -112,7 +113,7 @@ export default function CalendarView({ selectedDoctor, onSelectDoctor, onSetting
       
       // Auto-navigate to current month if the month has actually changed
       if (currentDate.getMonth() !== currentMonth || currentDate.getFullYear() !== currentYear) {
-        setCurrentDate(today);
+        setCurrentDate(startOfMonth(today));
       }
       
       // Always update selected date to today if viewing current month
@@ -254,14 +255,12 @@ export default function CalendarView({ selectedDoctor, onSelectDoctor, onSetting
       isRefreshingRef.current = false;
     }
     
-    const newDate = new Date(currentDate);
-    newDate.setMonth(newDate.getMonth() + (direction === 'prev' ? -1 : 1));
-    setCurrentDate(newDate);
+    setCurrentDate(addMonths(currentDate, direction === 'prev' ? -1 : 1));
   };
 
   const jumpToToday = () => {
     const today = new Date();
-    setCurrentDate(today);
+    setCurrentDate(startOfMonth(today));
     setSelectedDate(today);
   };
 

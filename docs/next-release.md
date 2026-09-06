@@ -20,9 +20,10 @@ Shipped in neither 1.4.0 (build 25) nor any earlier build. Verified on device.
 
 - **Finding 14 — stale role and doctor code.** Closed in the backend: `GET /api/user`
   reads the users table for token auth rather than echoing the JWT's login-time claims
-  (`cticu-backend` commit `b510100`, deployed 2026-09-06). The mobile side already
-  refreshes its cached user from that endpoint on every launch, so no app change was
-  needed.
+  (`cticu-backend` commit `b510100`, deployed 2026-09-06). Takes effect for a user only
+  once they are on a build containing `92d2c27`, which parses and caches that response —
+  build 26 calls the endpoint but discards the body, so the fix is not live for anyone
+  until 1.4.1 ships.
 
 - **Finding 3 — month navigation.** `currentDate` is anchored to the 1st via
   `startOfMonth`, and navigation uses `addMonths`, so shifting from the 31st can no

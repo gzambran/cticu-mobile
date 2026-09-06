@@ -655,6 +655,7 @@ export default function CalendarView({ selectedDoctor, onSelectDoctor, onSetting
       )}
 
       <KeyboardAwareScrollView
+        keyboardShouldPersistTaps="handled"
         style={styles.scrollView}
         bottomOffset={140}
         refreshControl={

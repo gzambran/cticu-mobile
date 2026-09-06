@@ -44,6 +44,7 @@ export default function LoginScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <KeyboardAwareScrollView
+        keyboardShouldPersistTaps="handled"
         style={styles.keyboardView}
         contentContainerStyle={styles.scrollContent}
         bottomOffset={20}

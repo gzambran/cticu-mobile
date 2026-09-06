@@ -346,6 +346,7 @@ function SwapScreen() {
       )}
 
       <KeyboardAwareScrollView
+        keyboardShouldPersistTaps="handled"
         style={styles.scrollView}
         bottomOffset={150}
         refreshControl={

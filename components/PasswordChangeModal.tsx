@@ -101,6 +101,7 @@ export default function PasswordChangeModal({ visible, onClose }: PasswordChange
       onRequestClose={handleClose}
     >
       <KeyboardAwareScrollView
+        keyboardShouldPersistTaps="handled"
         style={styles.container}
         contentContainerStyle={styles.scrollContent}
         bottomOffset={20}

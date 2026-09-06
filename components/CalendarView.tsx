@@ -1,4 +1,4 @@
-import { ForegroundContext } from '@/app/(tabs)/_layout';
+import { ForegroundContext } from '@/contexts/ForegroundContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';

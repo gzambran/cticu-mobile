@@ -1,22 +1,12 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { DoctorsProvider } from '@/contexts/DoctorsContext';
 import { FilterProvider } from '@/contexts/FilterContext';
+import { ForegroundContext } from '@/contexts/ForegroundContext';
 import useNotificationStore from '@/stores/notificationStore';
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs, usePathname } from 'expo-router';
-import React, { createContext, useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { AppState, AppStateStatus } from 'react-native';
-
-// Create a context for foreground events
-interface ForegroundContextType {
-  lastForegroundTime: Date;
-  isComingFromBackground: boolean;
-}
-
-export const ForegroundContext = createContext<ForegroundContextType>({
-  lastForegroundTime: new Date(),
-  isComingFromBackground: false,
-});
 
 export default function TabLayout() {
   const { user } = useAuth();
@@ -83,9 +73,11 @@ export default function TabLayout() {
   }, [user?.username, user?.role, user?.doctorCode]);
 
   return (
-    <DoctorsProvider>
-      <FilterProvider>
-        <ForegroundContext.Provider value={{ lastForegroundTime, isComingFromBackground }}>
+    <FilterProvider>
+      <ForegroundContext.Provider value={{ lastForegroundTime, isComingFromBackground }}>
+        {/* Nested inside ForegroundContext so it can retry a failed doctors load
+            on the next foreground (see DoctorsContext.tsx). */}
+        <DoctorsProvider>
           <Tabs
             screenOptions={{
               tabBarActiveTintColor: '#007AFF',
@@ -142,8 +134,8 @@ export default function TabLayout() {
               }}
             />
           </Tabs>
-        </ForegroundContext.Provider>
-      </FilterProvider>
-    </DoctorsProvider>
+        </DoctorsProvider>
+      </ForegroundContext.Provider>
+    </FilterProvider>
   );
 }

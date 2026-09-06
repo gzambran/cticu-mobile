@@ -10,7 +10,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { useNetworkState } from 'expo-network';
 import { StatusBar } from 'expo-status-bar';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -51,6 +51,31 @@ function SwapScreen() {
 
   const isAdmin = user?.role === 'admin';
 
+  // The auto-collapse decision below must be made once, from the data available the
+  // first time this screen loads — not re-run every time a background badge fetch
+  // stores a fresh `pendingRequests` array (AppState going `active` via Control
+  // Center, a notification, etc). Re-running it on every array identity change is
+  // what used to unmount an in-progress SwapRequestForm and discard everything typed.
+  const hasDecidedInitialCollapseRef = useRef(false);
+
+  const userHasSwapInvolvement = (requests: ShiftChangeRequest[]) =>
+    requests.some(request => {
+      // User is the requester
+      if (request.requester_username === user?.username) {
+        return true;
+      }
+
+      // User is involved as FROM or TO doctor in any shift
+      if (user?.doctorCode) {
+        return request.shifts.some(shift =>
+          shift.from_doctor === user.doctorCode ||
+          shift.to_doctor === user.doctorCode
+        );
+      }
+
+      return false;
+    });
+
   // Helper function to load/refresh data through the store
   const loadRequests = async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
@@ -60,6 +85,16 @@ function SwapScreen() {
       // Use the store's fetch method which updates pendingRequests
       if (user) {
         await fetchAndUpdateBadges(user.username, user.role, user.doctorCode);
+
+        if (!hasDecidedInitialCollapseRef.current) {
+          hasDecidedInitialCollapseRef.current = true;
+          // Read the store directly rather than the `pendingRequests` closed over by
+          // this render, which may not yet reflect the fetch that just resolved.
+          const freshRequests = useNotificationStore.getState().pendingRequests;
+          // Keep form open for new users, collapsed for users with any swap
+          // involvement — decided this once, never revisited by a later refresh.
+          setShowCreateForm(!userHasSwapInvolvement(freshRequests));
+        }
       }
       setLoadFailed(false);
     } catch (error) {
@@ -76,29 +111,6 @@ function SwapScreen() {
     loadRequests();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  // Auto-collapse form if user has ANY involvement in existing swaps
-  useEffect(() => {
-    const userHasAnyInvolvement = pendingRequests.some(request => {
-      // User is the requester
-      if (request.requester_username === user?.username) {
-        return true;
-      }
-      
-      // User is involved as FROM or TO doctor in any shift
-      if (user?.doctorCode) {
-        return request.shifts.some(shift => 
-          shift.from_doctor === user.doctorCode || 
-          shift.to_doctor === user.doctorCode
-        );
-      }
-      
-      return false;
-    });
-    
-    // Keep form open for new users, collapsed for users with any swap involvement
-    setShowCreateForm(!userHasAnyInvolvement);
-  }, [pendingRequests, user]);
 
   // Clear badges for regular users when viewing swap screen
   // Admins never clear badges (they clear when requests are handled)

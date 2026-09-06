@@ -1,4 +1,5 @@
 import authService, { NetworkError } from '@/services/auth';
+import useNotificationStore from '@/stores/notificationStore';
 import { useRouter, useSegments } from 'expo-router';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
@@ -100,16 +101,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = async () => {
     try {
       await authService.logout();
-      setIsAuthenticated(false);
-      setUser(null);
       // The useEffect will handle navigation
     } catch (error) {
       if (__DEV__ && error instanceof Error) {
         console.error('Sign out error:', error.message);
       }
-      // Even if logout fails, clear local state
+      // Even if logout fails, clear local state below anyway
+    } finally {
       setIsAuthenticated(false);
       setUser(null);
+      // seenRequestStates and pendingRequests are in-memory only and otherwise
+      // outlive the session: a pending request involving the next signed-in user
+      // would inherit whatever the previous user had already seen (or not) on a
+      // shared device.
+      useNotificationStore.getState().resetStore();
     }
   };
 

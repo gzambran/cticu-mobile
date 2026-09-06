@@ -1,5 +1,6 @@
 import api from '@/services/api';
 import useNotificationStore from '@/stores/notificationStore';
+import { ShiftChangeRequest } from '@/types';
 
 jest.mock('@/services/api', () => ({
   __esModule: true,
@@ -10,13 +11,14 @@ const mockedApi = api as unknown as {
   getShiftChangeRequests: jest.Mock;
 };
 
-const makeRequest = (overrides: Record<string, unknown> = {}) => ({
+const makeRequest = (overrides: Record<string, unknown> = {}): ShiftChangeRequest => ({
   id: 1,
   status: 'pending',
   requester_username: 'someone-else',
   shifts: [],
+  submitted_at: '2026-01-01T00:00:00Z',
   ...overrides,
-});
+} as ShiftChangeRequest);
 
 beforeEach(() => {
   useNotificationStore.getState().resetStore();
@@ -138,6 +140,42 @@ describe('regular user badges behave as unseen-update indicators', () => {
     useNotificationStore.getState().markAllRequestsAsSeen();
     await useNotificationStore.getState().fetchAndUpdateBadges('gz', 'user', 'GZ');
     expect(useNotificationStore.getState().swapBadgeCount).toBe(0);
+  });
+});
+
+describe('resetStore', () => {
+  it('clears counts, pending requests, seen state, and the failure flag', () => {
+    useNotificationStore.setState({
+      swapBadgeCount: 5,
+      requestsBadgeCount: 2,
+      pendingRequests: [makeRequest()],
+      seenRequestStates: new Set(['1-pending']),
+      badgesFetchFailed: true,
+    });
+
+    useNotificationStore.getState().resetStore();
+
+    const state = useNotificationStore.getState();
+    expect(state.swapBadgeCount).toBe(0);
+    expect(state.requestsBadgeCount).toBe(0);
+    expect(state.pendingRequests).toEqual([]);
+    expect(state.seenRequestStates.size).toBe(0);
+    expect(state.badgesFetchFailed).toBe(false);
+  });
+
+  it('makes a previously-seen request re-badge again, as it should for the next signed-in user', async () => {
+    mockedApi.getShiftChangeRequests.mockResolvedValue([
+      makeRequest({ id: 1, status: 'approved', requester_username: 'gz' }),
+    ]);
+
+    useNotificationStore.getState().markRequestAsSeen(1, 'approved');
+    await useNotificationStore.getState().fetchAndUpdateBadges('gz', 'user', 'GZ');
+    expect(useNotificationStore.getState().swapBadgeCount).toBe(0);
+
+    useNotificationStore.getState().resetStore();
+    await useNotificationStore.getState().fetchAndUpdateBadges('gz', 'user', 'GZ');
+
+    expect(useNotificationStore.getState().swapBadgeCount).toBe(1);
   });
 });
 

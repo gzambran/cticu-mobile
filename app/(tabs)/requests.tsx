@@ -7,7 +7,7 @@ import useConnectivityStore from '@/stores/connectivityStore';
 import { useFocusEffect } from '@react-navigation/native';
 import { useNetworkState } from 'expo-network';
 import { StatusBar } from 'expo-status-bar';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -37,6 +37,12 @@ export default function RequestsScreen() {
   // signal means the banner reflects what any screen last learned from the network.
   const backendReachable = useConnectivityStore(state => state.backendReachable);
   const setBackendReachable = useConnectivityStore(state => state.setBackendReachable);
+  // The focus callback below must stay referentially stable, so it cannot close over
+  // loadData or over `loading`/`refreshing` directly — it would capture their first
+  // values and never see an update. It reaches the current function through this ref
+  // instead, and in-flight state through a ref rather than React state.
+  const loadDataRef = useRef<((isRefresh?: boolean) => Promise<void>) | null>(null);
+  const isLoadingRef = useRef(false);
 
   useEffect(() => {
     loadData();
@@ -47,14 +53,16 @@ export default function RequestsScreen() {
   // device) never appear here until a pull-to-refresh or a force-quit.
   useFocusEffect(
     useCallback(() => {
-      if (user && !loading && !refreshing) {
-        loadData(true);
-      }
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [user?.username])
+      loadDataRef.current?.(true);
+    }, [])
   );
 
   const loadData = async (isRefresh = false) => {
+    if (isLoadingRef.current) {
+      return;
+    }
+    isLoadingRef.current = true;
+
     if (isRefresh) setRefreshing(true);
     else setLoading(true);
 
@@ -76,10 +84,13 @@ export default function RequestsScreen() {
         Alert.alert('Error', 'Failed to load data. Please try again.');
       }
     } finally {
+      isLoadingRef.current = false;
       setLoading(false);
       setRefreshing(false);
     }
   };
+
+  loadDataRef.current = loadData;
 
   const handleAddDates = async (doctor: string, dates: string[]) => {
     try {

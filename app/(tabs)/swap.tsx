@@ -48,6 +48,8 @@ function SwapScreen() {
   // isConnected is optional and undefined until the first reading — treat only an
   // explicit false as offline, so the indicator never flashes during startup.
   const isDisconnected = networkState.isConnected === false;
+  const loadRequestsRef = useRef<((isRefresh?: boolean) => Promise<void>) | null>(null);
+  const isLoadingRef = useRef(false);
 
   const isAdmin = user?.role === 'admin';
 
@@ -78,6 +80,11 @@ function SwapScreen() {
 
   // Helper function to load/refresh data through the store
   const loadRequests = async (isRefresh = false) => {
+    if (isLoadingRef.current) {
+      return;
+    }
+    isLoadingRef.current = true;
+
     if (isRefresh) setRefreshing(true);
     else setLoading(true);
 
@@ -101,10 +108,13 @@ function SwapScreen() {
       console.error('Error loading shift swap requests:', error);
       setLoadFailed(true);
     } finally {
+      isLoadingRef.current = false;
       setLoading(false);
       setRefreshing(false);
     }
   };
+
+  loadRequestsRef.current = loadRequests;
 
   // Load requests on mount
   useEffect(() => {
@@ -130,15 +140,14 @@ function SwapScreen() {
     }, [user?.username, user?.role, isAdmin])
   );
 
-  // Refresh data when screen comes into focus
+  // Refresh data when screen comes into focus. The callback must stay referentially
+  // stable, so it cannot close over loadRequests or over `loading`/`refreshing` —
+  // memoizing on the user would capture their first values and never see an update,
+  // which silently disabled this refresh entirely.
   useFocusEffect(
     useCallback(() => {
-      // Refresh data when screen gains focus
-      if (user && !loading && !refreshing) {
-        loadRequests(true);
-      }
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [user?.username, user?.role])
+      loadRequestsRef.current?.(true);
+    }, [])
   );
 
   const handleCreateSwap = async (shifts: ShiftChange[], notes?: string) => {

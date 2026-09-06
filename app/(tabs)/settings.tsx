@@ -8,6 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
 import * as Linking from 'expo-linking';
+import { useNetworkState } from 'expo-network';
 import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useState } from 'react';
 import {
@@ -26,6 +27,10 @@ export default function SettingsScreen() {
   const { signOut, user } = useAuth();
   const { defaultDoctor, setDefaultDoctor } = useFilter();
   const { doctors } = useDoctors();
+  const networkState = useNetworkState();
+  // isConnected is optional and undefined until the first reading — treat only an
+  // explicit false as offline, so the row is never disabled during startup.
+  const isDisconnected = networkState.isConnected === false;
   const [firstDayMonday, setFirstDayMonday] = useState(false);
   const [passwordModalVisible, setPasswordModalVisible] = useState(false);
 
@@ -55,8 +60,8 @@ export default function SettingsScreen() {
 
   const handleClearCache = async () => {
     Alert.alert(
-      'Clear Cache',
-      'This will remove all cached schedule data. You will need an internet connection to reload.',
+      'Clear Saved Data',
+      'This removes the schedule saved on your phone and reloads it from scratch.',
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -65,9 +70,9 @@ export default function SettingsScreen() {
           onPress: async () => {
             try {
               await api.clearCache();
-              Alert.alert('Success', 'Cache cleared successfully');
+              Alert.alert('Success', 'Saved data cleared');
             } catch {
-              Alert.alert('Error', 'Failed to clear cache');
+              Alert.alert('Error', 'Could not clear saved data. Try again.');
             }
           },
         },
@@ -187,12 +192,28 @@ export default function SettingsScreen() {
           <Text style={styles.cardTitle}>MORE</Text>
           
           <View style={styles.cardContent}>
-            <TouchableOpacity style={styles.settingRow} onPress={handleClearCache}>
+            {/* Clearing saved data offline would leave nothing to fall back on and no
+                way to reload, so the row is unavailable until there is a connection.
+                The right-hand label replaces the chevron rather than adding a line, so
+                the row height never changes as connectivity comes and goes. */}
+            <TouchableOpacity
+              style={styles.settingRow}
+              onPress={handleClearCache}
+              disabled={isDisconnected}
+            >
               <View style={styles.settingInfo}>
-                <Ionicons name="trash-outline" size={20} color="#007AFF" />
-                <Text style={styles.settingText}>Clear Cache</Text>
+                <Ionicons name="trash-outline" size={20} color={isDisconnected ? '#C7C7CC' : '#007AFF'} />
+                <Text style={[styles.settingText, isDisconnected && styles.settingTextDisabled]}>
+                  Clear Saved Data
+                </Text>
               </View>
-              <Ionicons name="chevron-forward" size={20} color="#C7C7CC" />
+              {isDisconnected ? (
+                <Text style={styles.settingUnavailable} numberOfLines={1}>
+                  Requires internet connection
+                </Text>
+              ) : (
+                <Ionicons name="chevron-forward" size={20} color="#C7C7CC" />
+              )}
             </TouchableOpacity>
             
             <View style={styles.divider} />
@@ -286,6 +307,13 @@ const styles = StyleSheet.create({
   settingText: {
     fontSize: 17,
     color: '#000',
+  },
+  settingTextDisabled: {
+    color: '#C7C7CC',
+  },
+  settingUnavailable: {
+    fontSize: 13,
+    color: '#8E8E93',
   },
   settingValue: {
     fontSize: 17,

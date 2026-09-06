@@ -191,6 +191,9 @@ export default function CalendarView({ selectedDoctor, onSelectDoctor, onSetting
       // Load current month + next 3 months (4 months total)
       const { start, end } = getMultiMonthBounds(year, month, 4);
 
+      // Reset before any request starts, so no fallback can be missed.
+      api.resetServedStaleCache();
+
       const fetchPromises: Promise<any>[] = [
         api.getSchedules(start, end, isRefresh || isSilent),
         api.getHolidays(start, end, isRefresh || isSilent),
@@ -201,7 +204,6 @@ export default function CalendarView({ selectedDoctor, onSelectDoctor, onSetting
         fetchPromises.push(api.getUserEvents(start, end, isRefresh || isSilent));
       }
 
-      api.resetServedStaleCache();
       const results = await Promise.all(fetchPromises);
       const [schedulesData, holidaysData] = results;
 

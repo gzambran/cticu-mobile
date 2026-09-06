@@ -4,9 +4,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { ApiError, isUnreachableError } from '@/services/api';
 import authService from '@/services/auth';
 import useConnectivityStore from '@/stores/connectivityStore';
+import { useFocusEffect } from '@react-navigation/native';
 import { useNetworkState } from 'expo-network';
 import { StatusBar } from 'expo-status-bar';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -41,6 +42,17 @@ export default function RequestsScreen() {
     loadData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Tabs stay mounted, so without this, changes made elsewhere (web admin, another
+  // device) never appear here until a pull-to-refresh or a force-quit.
+  useFocusEffect(
+    useCallback(() => {
+      if (user && !loading && !refreshing) {
+        loadData(true);
+      }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [user?.username])
+  );
 
   const loadData = async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true);

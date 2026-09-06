@@ -148,7 +148,7 @@ function SwapScreen() {
       await loadRequests(); // Request will disappear after refresh
     } catch (error) {
       if (isUnreachableError(error)) {
-        Alert.alert("Couldn't Save", 'Try again later.');
+        Alert.alert("Couldn't Save", 'Try again later');
       } else {
         Alert.alert('Error', 'Failed to dismiss request');
       }
@@ -171,7 +171,7 @@ function SwapScreen() {
               await loadRequests();
             } catch (error) {
               if (isUnreachableError(error)) {
-                Alert.alert("Couldn't Save", 'Try again later.');
+                Alert.alert("Couldn't Save", 'Try again later');
               } else {
                 Alert.alert('Error', 'Failed to approve shift swap');
               }
@@ -198,7 +198,7 @@ function SwapScreen() {
               await loadRequests();
             } catch (error) {
               if (isUnreachableError(error)) {
-                Alert.alert("Couldn't Save", 'Try again later.');
+                Alert.alert("Couldn't Save", 'Try again later');
               } else {
                 Alert.alert('Error', 'Failed to deny shift swap');
               }

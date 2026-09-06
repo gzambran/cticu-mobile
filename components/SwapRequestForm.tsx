@@ -188,7 +188,7 @@ export default function SwapRequestForm({
       setNotes('');
     } catch (error) {
       if (isUnreachableError(error)) {
-        Alert.alert("Couldn't Save", 'Try again later.');
+        Alert.alert("Couldn't Save", 'Try again later');
       } else {
         Alert.alert('Error', 'Failed to submit swap request');
       }

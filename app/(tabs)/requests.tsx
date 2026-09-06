@@ -87,7 +87,7 @@ export default function RequestsScreen() {
       if (isDisconnected || isUnreachableError(error)) {
         // Cause-neutral: the banner above already says whether it's the connection
         // or the backend. What matters here is that nothing was written.
-        Alert.alert("Couldn't Save", 'Try again later.');
+        Alert.alert("Couldn't Save", 'Try again later');
       } else {
         Alert.alert('Error', 'Failed to save dates. Please try again.');
       }
@@ -109,7 +109,7 @@ export default function RequestsScreen() {
       await loadData();
     } catch (error) {
       if (isDisconnected || isUnreachableError(error)) {
-        Alert.alert("Couldn't Save", 'Try again later.');
+        Alert.alert("Couldn't Save", 'Try again later');
       } else {
         Alert.alert('Error', 'Failed to remove date. Please try again.');
       }

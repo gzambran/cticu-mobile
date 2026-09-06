@@ -29,6 +29,16 @@ describe('parseDate', () => {
   it('round-trips with formatDate', () => {
     expect(formatDate(parseDate('2026-10-15'))).toBe('2026-10-15');
   });
+
+  it('keeps a 1st-of-month date in its own month, unlike new Date(string)', () => {
+    // `new Date('2026-10-01')` parses as UTC midnight, which reads back as
+    // September in negative-UTC-offset (US) time zones — the exact bug that
+    // grouped a 1st-of-month swap shift under the previous month's heading.
+    const parsed = parseDate('2026-10-01');
+    expect(parsed.getFullYear()).toBe(2026);
+    expect(parsed.getMonth()).toBe(9);
+    expect(parsed.getDate()).toBe(1);
+  });
 });
 
 describe('getCalendarDays', () => {

@@ -107,7 +107,11 @@ export default function SwapRequestForm({
     const grouped = new Map<string, { month: number; year: number; shifts: { date: string; shift: ShiftType }[] }>();
     
     shifts.forEach(({ date, shift }) => {
-      const d = new Date(date);
+      // `date` is a YYYY-MM-DD string; parseDate reads it as a local-time date. A
+      // bare `new Date(date)` parses as UTC, which reads as the previous month in
+      // US time zones for any 1st-of-month date and mis-groups it under the wrong
+      // heading (the chip text itself already used parseDate and was correct).
+      const d = parseDate(date);
       const month = d.getMonth();
       const year = d.getFullYear();
       const key = `${year}-${month}`;

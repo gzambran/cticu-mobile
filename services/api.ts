@@ -258,8 +258,6 @@ class ApiService {
           response.status
         );
       }
-
-      await this.invalidateSchedulesCache();
     } catch (error) {
       if (error instanceof AuthError || error instanceof NetworkError || error instanceof ApiError) {
         throw error;
@@ -310,8 +308,6 @@ class ApiService {
           response.status
         );
       }
-
-      await this.invalidateSchedulesCache();
     } catch (error) {
       if (error instanceof AuthError || error instanceof NetworkError || error instanceof ApiError) {
         throw error;
@@ -452,10 +448,11 @@ class ApiService {
     }
   }
 
-  // Every date-range window has its own cache key with its own freshness clock, so a
-  // swap that changes the schedule (approve) or that could otherwise leave a viewer
-  // looking at a stale assignment (deny, create) must drop all of them rather than
-  // try to guess which windows are affected.
+  // Every date-range window has its own cache key with its own freshness clock, so an
+  // approval — the only operation that actually rewrites the schedule server-side —
+  // must drop all of them rather than try to guess which windows are affected.
+  // Creating or denying a request changes nothing the calendar reads, and clearing on
+  // those would strand an offline cold launch with no cached schedule at all.
   private async invalidateSchedulesCache(): Promise<void> {
     try {
       const keys = await AsyncStorage.getAllKeys();

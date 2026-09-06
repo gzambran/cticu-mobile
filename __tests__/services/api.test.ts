@@ -186,16 +186,21 @@ describe('shift-change mutations invalidate the schedule cache', () => {
     expect(await remainingKeys()).toEqual(['doctors']);
   });
 
-  it('clears every schedules_* key on deny', async () => {
+  // Approving is the only operation that rewrites the schedule server-side (the sole
+  // UPDATE on the schedules table lives in the backend's approve handler). Denying or
+  // creating changes nothing the calendar reads, so clearing on those would discard
+  // the offline schedule for the most common action in the app and gain nothing.
+  it('leaves the cache alone on deny', async () => {
     await seedScheduleCaches();
     mockedFetch.mockResolvedValueOnce(okResponse({}));
 
     await api.denyShiftChangeRequest(1);
 
-    expect(await remainingKeys()).toEqual(['doctors']);
+    expect(await remainingKeys()).not.toEqual(['doctors']);
+    expect((await remainingKeys()).length).toBeGreaterThan(1);
   });
 
-  it('clears every schedules_* key on create', async () => {
+  it('leaves the cache alone on create', async () => {
     await seedScheduleCaches();
     mockedFetch.mockResolvedValueOnce(okResponse({}));
 
@@ -203,7 +208,7 @@ describe('shift-change mutations invalidate the schedule cache', () => {
       { date: '2026-10-15', shiftType: '5C', from_doctor: 'A', to_doctor: 'B' } as any,
     ]);
 
-    expect(await remainingKeys()).toEqual(['doctors']);
+    expect((await remainingKeys()).length).toBeGreaterThan(1);
   });
 
   it('does not touch the cache when the mutation fails', async () => {
